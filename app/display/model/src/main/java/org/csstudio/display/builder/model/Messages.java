@@ -233,6 +233,7 @@ public class Messages
                          WidgetProperties_LineColor,
                          WidgetProperties_LineWidth,
                          WidgetProperties_Locale,
+                         WidgetProperties_Locked,
                          WidgetProperties_Macros,
                          WidgetProperties_MajorTickSpace,
                          WidgetProperties_MajorTickStepHint,

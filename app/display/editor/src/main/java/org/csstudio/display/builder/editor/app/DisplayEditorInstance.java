@@ -191,6 +191,18 @@ public class DisplayEditorInstance implements AppInstance
                 ungroup = new RemoveGroupAction(editor_gui.getDisplayEditor(), null);
                 ungroup.setDisable(true);
             }
+            
+            final MenuItem lock;
+            final MenuItem unlock;
+            if (selection.get(0) instanceof GroupWidget) {
+                lock = new LockAction(editor_gui.getDisplayEditor(), (GroupWidget)selection.get(0));
+                unlock = new UnlockAction(editor_gui.getDisplayEditor(), (GroupWidget)selection.get(0));
+            } else {
+                lock = new LockAction(editor_gui.getDisplayEditor(), null);
+                lock.setDisable(true);
+                unlock = new UnlockAction(editor_gui.getDisplayEditor(), null);
+                unlock.setDisable(true);
+            }
 
             final MenuItem embedded;
             if (selection.size() == 1)
@@ -245,6 +257,8 @@ public class DisplayEditorInstance implements AppInstance
                                        new SeparatorMenuItem(),
                                        group,
                                        ungroup,
+                                       lock,
+                                       unlock,
                                        new SeparatorMenuItem(),
                                        morph,
                                        back,

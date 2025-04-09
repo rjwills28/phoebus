@@ -20,6 +20,7 @@ import org.csstudio.display.builder.representation.javafx.JFXUtil;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Border;
@@ -32,6 +33,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
 import javafx.scene.shape.StrokeType;
+import javafx.scene.text.Font;
 
 /** Creates JavaFX item for model widget
  *  @author Kay Kasemir
@@ -58,22 +60,30 @@ public class GroupRepresentation extends JFXBaseRepresentation<Pane, GroupWidget
     /** Label on top of background */
     private Label label;
 
+    /** Label in editor mode if group is locked/unlocked */
+    private Label lockedLabel;
+
     /** Inner pane that holds child widgets */
     private Pane inner;
 
     private volatile boolean firstUpdate = true;
     private volatile int inset = 10;
     private volatile Color foreground_color, line_color, background_color;
+    private volatile boolean lockedLabelShowing = false;
+    private volatile boolean clickRegistered = false;
 
     @Override
     public Pane createJFXNode() throws Exception
     {
         label = new Label();
+        lockedLabel = new Label();
         inner = new Pane();
 
         computeColors();
 
-        return new Pane(label, inner);
+        Pane pane = new Pane(label, inner, lockedLabel);
+        pane.addEventFilter(MouseEvent.MOUSE_PRESSED, this::clickInGroup);
+        return pane ;
     }
 
     @Override
@@ -95,6 +105,7 @@ public class GroupRepresentation extends JFXBaseRepresentation<Pane, GroupWidget
         model_widget.propFont().addUntypedPropertyListener(borderChangedListener);
         model_widget.propWidth().addUntypedPropertyListener(borderChangedListener);
         model_widget.propHeight().addUntypedPropertyListener(borderChangedListener);
+        model_widget.propLocked().addUntypedPropertyListener(borderChangedListener);
     }
 
     @Override
@@ -109,6 +120,7 @@ public class GroupRepresentation extends JFXBaseRepresentation<Pane, GroupWidget
         model_widget.propFont().removePropertyListener(borderChangedListener);
         model_widget.propWidth().removePropertyListener(borderChangedListener);
         model_widget.propHeight().removePropertyListener(borderChangedListener);
+        model_widget.propLocked().removePropertyListener(borderChangedListener);
         super.unregisterListeners();
     }
 
@@ -126,6 +138,52 @@ public class GroupRepresentation extends JFXBaseRepresentation<Pane, GroupWidget
         background_color = JFXUtil.convert(model_widget.propBackgroundColor().getValue());
     }
 
+    private void clickInGroup(final MouseEvent event)
+    {
+        if (toolkit.isEditMode())
+        {
+            if (!clickRegistered && jfx_node.getScene() != null)
+            {
+                jfx_node.getScene().addEventFilter(MouseEvent.MOUSE_PRESSED, this::clickOutsideWidget);
+                clickRegistered = true;
+            }
+            lockedLabel.setVisible(true);
+            lockedLabel.setOpacity(80);
+            lockedLabel.relocate(0, -21);
+            lockedLabel.setTextFill(Color.GRAY);
+            lockedLabel.setBackground(new Background(new BackgroundFill(Color.LIGHTYELLOW, CornerRadii.EMPTY, Insets.EMPTY)));
+            lockedLabel.setFont(new Font("Arial", 16));
+            if (model_widget.propLocked().getValue())
+            {
+                lockedLabel.setText("Locked");
+            } else
+            {
+                lockedLabel.setText("Unlocked");
+            }
+            lockedLabelShowing = true;
+        } else
+        {
+            lockedLabel.setVisible(false);
+            lockedLabelShowing = false;
+        }
+    }
+
+    private void clickOutsideWidget(final MouseEvent event)
+    {
+        if (toolkit.isEditMode())
+        {
+            if (event.isPrimaryButtonDown())
+            {
+                lockedLabel.setVisible(false);
+                lockedLabelShowing = false;
+            }
+        } else
+        {
+            lockedLabel.setVisible(false);
+            lockedLabelShowing = false;
+        }
+    }
+
     @Override
     public void updateChanges()
     {
@@ -137,6 +195,22 @@ public class GroupRepresentation extends JFXBaseRepresentation<Pane, GroupWidget
                 jfx_node.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
             else
                 jfx_node.setBackground(new Background(new BackgroundFill(background_color, null, null)));
+
+            if (toolkit.isEditMode())
+            {
+                if (lockedLabelShowing)
+                {
+                    if (model_widget.propLocked().getValue())
+                    {
+                        lockedLabel.setText("Locked");
+                    } else
+                    {
+                        lockedLabel.setText("Unlocked");
+                    }
+                } 
+            } else {
+            	lockedLabel.setVisible(false);
+            }
 
             final WidgetFont font = model_widget.propFont().getValue();
 

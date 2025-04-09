@@ -25,9 +25,11 @@ import java.util.prefs.Preferences;
 import javafx.scene.control.*;
 import org.csstudio.display.builder.editor.actions.ActionDescription;
 import org.csstudio.display.builder.editor.app.CreateGroupAction;
+import org.csstudio.display.builder.editor.app.LockAction;
 import org.csstudio.display.builder.editor.app.DisplayEditorInstance;
 import org.csstudio.display.builder.editor.app.PasteWidgets;
 import org.csstudio.display.builder.editor.app.RemoveGroupAction;
+import org.csstudio.display.builder.editor.app.UnlockAction;
 import org.csstudio.display.builder.editor.properties.PropertyPanel;
 import org.csstudio.display.builder.editor.tree.CollapseTreeAction;
 import org.csstudio.display.builder.editor.tree.ExpandTreeAction;
@@ -416,6 +418,17 @@ public class EditorGUI
                 ungroup = new RemoveGroupAction(editor, null);
                 ungroup.setDisable(true);
             }
+            final MenuItem lock;
+            final MenuItem unlock;
+            if (widgets.get(0) instanceof GroupWidget) {
+                lock = new LockAction(editor, (GroupWidget)widgets.get(0));
+                unlock = new UnlockAction(editor, (GroupWidget)widgets.get(0));
+            } else {
+                lock = new LockAction(editor, null);
+                lock.setDisable(true);
+                unlock = new UnlockAction(editor, null);
+                unlock.setDisable(true);
+            }
             if (editor.isReadonly())
                 menu.getItems().setAll(copy,
                                        new FindWidgetAction(node, editor),
@@ -433,6 +446,8 @@ public class EditorGUI
                                        new SeparatorMenuItem(),
                                        group,
                                        ungroup,
+                                       lock,
+                                       unlock,
                                        new SeparatorMenuItem(),
                                        new ActionWapper(ActionDescription.TO_BACK),
                                        new ActionWapper(ActionDescription.MOVE_UP),

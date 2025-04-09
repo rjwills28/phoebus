@@ -32,6 +32,7 @@ import org.csstudio.display.builder.model.persist.NamedWidgetColors;
 import org.csstudio.display.builder.model.persist.NamedWidgetFonts;
 import org.csstudio.display.builder.model.persist.WidgetColorService;
 import org.csstudio.display.builder.model.persist.WidgetFontService;
+import org.csstudio.display.builder.model.properties.BooleanWidgetProperty;
 import org.csstudio.display.builder.model.properties.EnumWidgetProperty;
 import org.csstudio.display.builder.model.properties.WidgetColor;
 import org.csstudio.display.builder.model.properties.WidgetFont;
@@ -111,6 +112,17 @@ public class GroupWidget extends MacroWidget
                                                                 final Style default_value)
                 {
                     return new EnumWidgetProperty<>(this, widget, default_value);
+                }
+            };
+
+    static final WidgetPropertyDescriptor<Boolean> propLocked =
+            new WidgetPropertyDescriptor<>(
+                    WidgetPropertyCategory.DISPLAY, "locked", Messages.WidgetProperties_Locked)
+            {
+                @Override
+                public WidgetProperty<Boolean> createProperty(final Widget widget, final Boolean value)
+                {
+                    return new BooleanWidgetProperty(this, widget, value);
                 }
             };
 
@@ -207,6 +219,7 @@ public class GroupWidget extends MacroWidget
     private volatile WidgetProperty<Boolean> transparent;
     private volatile WidgetProperty<WidgetFont> font;
     private volatile WidgetProperty<int[]> insets;
+    private volatile WidgetProperty<Boolean> locked;
 
     /** Constructor */
     public GroupWidget()
@@ -225,6 +238,7 @@ public class GroupWidget extends MacroWidget
         properties.add(line = propLineColor.createProperty(this, WidgetColorService.getColor(NamedWidgetColors.TEXT)));
         properties.add(background = propBackgroundColor.createProperty(this, WidgetColorService.getColor(NamedWidgetColors.BACKGROUND)));
         properties.add(transparent = propTransparent.createProperty(this, false));
+        properties.add(locked = propLocked.createProperty(this, false));
         properties.add(insets = runtimePropExtendedInsets.createProperty(this, new int[] { 0, 0, 0, 0 }));
     }
 
@@ -295,6 +309,12 @@ public class GroupWidget extends MacroWidget
     public WidgetProperty<Boolean> propTransparent()
     {
         return transparent;
+    }
+
+    /** @return 'locked' property */
+    public WidgetProperty<Boolean> propLocked()
+    {
+        return locked;
     }
 
     /** @return 'font' property */

@@ -123,6 +123,18 @@ abstract public class JFXBaseRepresentation<JFX extends Node, MW extends Widget>
                             // System.out.println("Ignoring click in " + model_widget);
                             return;
                         }
+                        // If a widget is within a group and that group has been locked then
+                        // do not let the user select the individual widget
+                        if (!model_widget.getParent().isEmpty())
+                        {
+	                        if (model_widget.getParent().get() instanceof GroupWidget)
+	                        {
+	                            if (((GroupWidget) model_widget.getParent().get()).propLocked().getValue())
+	                            {
+	                                return;
+	                            }
+	                        }
+                        }
                         event.consume();
                         toolkit.fireClick(model_widget, event.isShortcutDown());
                     }
