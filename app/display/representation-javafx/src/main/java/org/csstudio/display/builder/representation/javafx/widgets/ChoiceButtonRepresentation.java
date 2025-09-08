@@ -335,12 +335,6 @@ public class ChoiceButtonRepresentation extends RegionBaseRepresentation<TilePan
             final Color fg = JFXUtil.convert(model_widget.propForegroundColor().getValue());
             final String background = JFXUtil.shadedStyle(model_widget.propBackgroundColor().getValue());
             final String selected = JFXUtil.shadedStyle(model_widget.propSelectedColor().getValue());
-            // Don't disable the widget, because that would also remove the
-            // context menu etc.
-            // Just apply a style that matches the disabled look.
-            enabled = model_widget.propEnabled().getValue() &&
-                      model_widget.runtimePropPVWritable().getValue();
-            setDisabledLook(enabled, jfx_node.getChildren());
             for (Node node : jfx_node.getChildren())
             {
                 final ButtonBase b = (ButtonBase) node;
@@ -353,6 +347,13 @@ public class ChoiceButtonRepresentation extends RegionBaseRepresentation<TilePan
                 else
                     b.setStyle(background);
             }
+            
+            // Don't disable the widget, because that would also remove the
+            // context menu etc.
+            // Just apply a style that matches the disabled look.
+            enabled = model_widget.propEnabled().getValue() &&
+                      model_widget.runtimePropPVWritable().getValue();
+            setDisabledLook(enabled, jfx_node.getChildren());
         }
     }
 
