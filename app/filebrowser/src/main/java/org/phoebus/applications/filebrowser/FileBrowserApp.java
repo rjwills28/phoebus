@@ -2,6 +2,7 @@ package org.phoebus.applications.filebrowser;
 
 import java.io.File;
 import java.net.URI;
+import java.net.URL;
 
 import org.phoebus.framework.preferences.AnnotatedPreferences;
 import org.phoebus.framework.preferences.Preference;
@@ -45,7 +46,13 @@ public class FileBrowserApp implements AppResourceDescriptor {
     @Override
     public AppInstance create(final URI resource)
     {
-        return createWithRoot(new File(resource));
+        return createWithRoot(new File(resource.getPath()));
+    }
+    
+    @Override
+    public URL getIconURL()
+    {
+        return FileBrowserApp.class.getResource("/icons/filebrowser.png");
     }
 
     public AppInstance createWithRoot(final File directory)
