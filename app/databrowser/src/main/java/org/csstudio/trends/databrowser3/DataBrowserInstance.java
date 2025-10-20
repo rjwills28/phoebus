@@ -154,7 +154,7 @@ public class DataBrowserInstance implements AppInstance
         perspective = new Perspective(minimal);
 
         dock_item = new DockItemWithInput(this, perspective, null, file_extensions, this::doSave);
-        DockPane.getActiveDockPane().addTab(dock_item);
+        DockPane.getMainDockPain().addTab(dock_item);
 
         dock_item.addClosedNotification(this::dispose);
 

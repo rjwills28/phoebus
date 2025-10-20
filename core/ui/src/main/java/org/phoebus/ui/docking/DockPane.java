@@ -130,6 +130,21 @@ public class DockPane extends TabPane
         return pane;
     }
 
+    public static DockPane getMainDockPain() {
+        for (Stage stage : DockStage.getDockStages()) 
+        {
+            if (stage.getProperties().get(DockStage.KEY_ID).equals(DockStage.ID_MAIN)) {
+                for (DockPane check : DockStage.getDockPanes(stage))
+                    if (isDockPaneUsable(check))
+                    {
+                        setActiveDockPane(check);
+                        return check;
+                    }
+            }
+        }
+        return getActiveDockPane();
+    }
+
     /** Set the 'active' dock pane
      *
      *  <p>Called within the phoebus framework,
