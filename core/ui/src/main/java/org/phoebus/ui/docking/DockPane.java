@@ -187,6 +187,9 @@ public class DockPane extends TabPane
 
     /** Is this dock pane 'fixed' ? */
     private boolean fixed = false;
+    
+    /** Is this a standalone window with no tabs/toolbar etc */
+    private boolean standalone = false;
 
     /** Create DockPane
      *  @param tabs
@@ -238,6 +241,16 @@ public class DockPane extends TabPane
     }
 
     protected LinkedList<DockItem> tabsInOrderOfFocus = new LinkedList<>();
+
+    public void setAsStandAloneWindow(boolean standalone)
+    {
+        this.standalone = standalone;
+    }
+    
+    public boolean isStandAloneWindow()
+    {
+        return standalone;
+    }
 
     private void showContextMenu(final ContextMenuEvent event)
     {
@@ -496,7 +509,7 @@ public class DockPane extends TabPane
 
     private void doAutoHideTabs(final Scene scene)
     {
-        final boolean do_hide = getTabs().size() == 1  &&  !always_show_tabs;
+    	final boolean do_hide = (getTabs().size() == 1  &&  !always_show_tabs) || isStandAloneWindow();
 
         // Hack from https://www.snip2code.com/Snippet/300911/A-trick-to-hide-the-tab-area-in-a-JavaFX :
         // Locate the header's pane and set height to zero
