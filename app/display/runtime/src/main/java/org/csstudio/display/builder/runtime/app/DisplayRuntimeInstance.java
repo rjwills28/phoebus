@@ -132,8 +132,10 @@ public class DisplayRuntimeInstance implements AppInstance
                     standalone = true;
                 // Open new Stage in which this app will be opened, its DockPane is a new active one
                 final Stage new_stage = new Stage();
-                if (prefTarget.startsWith("window@") || prefTarget.startsWith("standalone@"))
+                if (prefTarget.startsWith("window@"))
                     DockStage.configureStage(new_stage, new Geometry(prefTarget.substring(7)), standalone);
+                else if (prefTarget.startsWith("standalone@"))
+                    DockStage.configureStage(new_stage, new Geometry(prefTarget.substring(11)), standalone);
                 else
                     DockStage.configureStage(new_stage, new Geometry(null), standalone);
                 new_stage.show();
