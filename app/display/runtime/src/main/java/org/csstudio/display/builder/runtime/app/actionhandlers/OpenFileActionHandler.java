@@ -9,6 +9,7 @@ import org.csstudio.display.builder.model.Widget;
 import org.csstudio.display.builder.model.spi.ActionInfo;
 import org.csstudio.display.builder.representation.ToolkitRepresentation;
 import org.csstudio.display.builder.runtime.ActionUtil;
+import org.csstudio.display.builder.runtime.Preferences;
 import org.csstudio.display.builder.runtime.app.DisplayRuntimeInstance;
 import org.csstudio.display.builder.runtime.script.ScriptUtil;
 import org.phoebus.ui.docking.DockPane;
@@ -39,9 +40,9 @@ public class OpenFileActionHandler implements ActionHandler {
             toolkit.execute(() ->
             {
                 DockPane dockPane = DisplayRuntimeInstance.ofDisplayModel(top_model).getDockItem().getDockPane();
-                if (dockPane.isStandAloneWindow()) {
+                if (dockPane.isStandAloneWindow() || Preferences.application_open_location.equals("main")) {
                     // Open the file in the main Phoebus window if launched from
-                    // a standalone screen.
+                    // a standalone screen or specified in the preferences.
                     DockPane.setActiveDockPane(DockPane.getMainDockPain());
                 }
                 try

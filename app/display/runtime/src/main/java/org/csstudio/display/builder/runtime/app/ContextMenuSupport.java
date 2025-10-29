@@ -27,6 +27,7 @@ import org.csstudio.display.builder.model.spi.ActionInfo;
 import org.csstudio.display.builder.representation.ToolkitListener;
 import org.csstudio.display.builder.representation.javafx.widgets.JFXBaseRepresentation;
 import org.csstudio.display.builder.runtime.Messages;
+import org.csstudio.display.builder.runtime.Preferences;
 import org.csstudio.display.builder.runtime.RuntimeAction;
 import org.csstudio.display.builder.runtime.RuntimeUtil;
 import org.csstudio.display.builder.runtime.WidgetRuntime;
@@ -91,9 +92,9 @@ class ContextMenuSupport {
                     DisplayRuntimeInstance displayRuntimeInstance = DisplayRuntimeInstance.ofDisplayModel(displayModel);
                     DockItem dockItem = displayRuntimeInstance.getDockItem();
                     DockPane dockPane = dockItem.getDockPane();
-                    if (dockPane.isStandAloneWindow()) {
-                        // If in a standalone window, set the active dock pane to be the 'main'
-                        // Phoebus pain instead of the current dock pane
+                    if (dockPane.isStandAloneWindow() || Preferences.application_open_location.equals("main")) {
+                        // If in a standalone window or defined in the preference, set the active dock pane
+                        // to be the 'main' Phoebus pain instead of the current dock pane
                         setFocus = () -> DockPane.setActiveDockPane(DockPane.getMainDockPain());
                     } else {
                         setFocus = () -> DockPane.setActiveDockPane(dockPane);

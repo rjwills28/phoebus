@@ -35,6 +35,8 @@ public class Preferences
     public static final List<TextPatch> pv_name_patches = new ArrayList<>();
     /** Preference setting */
     @Preference public static int default_zoom_factor;
+    /** Preference setting */
+    @Preference public static String application_open_location;
 
     static
     {
