@@ -18,6 +18,8 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
+
 import org.csstudio.display.builder.model.DisplayModel;
 import org.csstudio.display.builder.model.Widget;
 import org.csstudio.display.builder.model.WidgetProperty;
@@ -95,9 +97,24 @@ class ContextMenuSupport {
                     if (dockPane.isStandAloneWindow() || Preferences.application_open_location.equals("main")) {
                         // If in a standalone window or defined in the preference, set the active dock pane
                         // to be the 'main' Phoebus pain instead of the current dock pane
-                        setFocus = () -> DockPane.setActiveDockPane(DockPane.getMainDockPain());
+                        setFocus = () -> {
+                            DockPane.setActiveDockPane(DockPane.getMainDockPain());
+                            Stage stage = DockPane.getActiveStage();
+                            if (stage != null) {
+                                stage.setAlwaysOnTop(true);
+                                stage.setAlwaysOnTop(false);
+                            }
+                        };
+                        
                     } else {
-                        setFocus = () -> DockPane.setActiveDockPane(dockPane);
+                        setFocus = () -> {
+                            DockPane.setActiveDockPane(dockPane);
+                            Stage stage = DockPane.getActiveStage();
+                            if (stage != null) {
+                                stage.setAlwaysOnTop(true);
+                                stage.setAlwaysOnTop(false);
+                            }
+                        };
                     }
                 }
 
