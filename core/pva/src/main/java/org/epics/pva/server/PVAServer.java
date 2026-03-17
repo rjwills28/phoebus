@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2025 Oak Ridge National Laboratory.
+ * Copyright (c) 2019-2026 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -34,7 +34,6 @@ import org.epics.pva.data.PVAStructure;
  *
  *  @author Kay Kasemir
  */
-@SuppressWarnings("nls")
 public class PVAServer implements AutoCloseable
 {
     // TODO Implement beacons?
@@ -56,11 +55,14 @@ public class PVAServer implements AutoCloseable
     /** TCP connection listener, creates {@link ServerTCPHandler} for each connecting client */
     private final ServerTCPListener tcp;
 
-    /** Optional searche handler 'hook' */
+    /** Optional search handler 'hook' */
     private final SearchHandler custom_search_handler;
 
     /** Handlers for the TCP connections clients established to this server */
     private final KeySetView<ServerTCPHandler, Boolean> tcp_handlers = ConcurrentHashMap.newKeySet();
+
+    /** Authorization handler, checks if a client may write a PV */
+    private ServerAuthorization authorization = new ServerAuthorization();
 
     /** Create PVA Server
      *  @throws Exception on error
@@ -96,6 +98,28 @@ public class PVAServer implements AutoCloseable
     public InetSocketAddress getTCPAddress(final boolean tls)
     {
         return tcp.getResponseAddress(tls);
+    }
+
+    /** Configure server authorization
+     *
+     *  By default, all authenticated clients may write
+     *
+     *  @param authorization {@link ServerAuthorization}
+     */
+    public void configureAuthorization(final ServerAuthorization authorization)
+    {
+        this.authorization = authorization;
+    }
+
+    /** @param pv_name Channel for which to check write access
+     *  @param client_auth Client authentication
+     *  @return Does client have write access?
+     */
+    boolean hasWriteAccess(final String pv_name, final ClientAuthentication client_auth)
+    {
+        boolean may_write = authorization.hasWriteAccess(pv_name, client_auth);
+        logger.log(Level.FINE, () -> client_auth + (may_write ? " can write '" : " CANNOT write '") + pv_name + "'");
+        return may_write;
     }
 
     /** Create a read-only PV which serves data to clients
@@ -167,7 +191,7 @@ public class PVAServer implements AutoCloseable
      *  Network address and authentication info
      */
     public static record ClientInfo(InetSocketAddress address,
-                                    ServerAuth authentication)
+                                    ClientAuthentication authentication)
     {
     }
 
@@ -178,7 +202,7 @@ public class PVAServer implements AutoCloseable
     {
         return tcp_handlers.stream()
                            .map(tcp -> new ClientInfo(tcp.getRemoteAddress(),
-                                                      tcp.getAuth()))
+                                                      tcp.getClientAuthentication()))
                            .toList();
     }
 
@@ -193,7 +217,7 @@ public class PVAServer implements AutoCloseable
      *  @param client Client's UDP reply address
      *  @param tls_requested Does client support tls?
      *  @param tcp_connection Optional TCP connection for search received via TCP, else <code>null</code>
-     *  @return
+     *  @return Has the search been handled (sent reply, ...), or was it ignored?
      */
     boolean handleSearchRequest(final int seq, final int cid, final String name,
                                 final InetSocketAddress client,
@@ -203,7 +227,13 @@ public class PVAServer implements AutoCloseable
         // Both client and server must support TLS
         final boolean tls = tls_requested  &&  !PVASettings.EPICS_PVAS_TLS_KEYCHAIN.isBlank();
         if (tls_requested  &&  !tls)
-                logger.log(Level.WARNING, "PVA Client " + client + " searches for '" + name + "' with TLS, but EPICS_PVAS_TLS_KEYCHAIN is not configured");
+                logger.log(Level.WARNING, () -> "PVA Client " + client + " searches for '" + name + "' with TLS, but EPICS_PVAS_TLS_KEYCHAIN is not configured");
+
+        if (! authorization.allowSearch(name, client.getAddress()))
+        {
+            logger.log(Level.FINE, () -> "Ignoring PVA Client " + client + " search for '" + name + "'");
+            return false;
+        }
 
         // Send search reply from either custom_search_handler or later in here
         final Consumer<InetSocketAddress> send_search_reply = server_address ->
@@ -241,12 +271,12 @@ public class PVAServer implements AutoCloseable
             final ServerPV pv = getPV(name);
             if (pv != null)
             {   // Reply with TCP connection info
-                logger.log(Level.FINE, () -> "Received Search for known PV " + pv);
+                logger.log(Level.FINE, () -> "Received Search for known PV " + pv + " [CID " + cid + "]");
                 send_search_reply.accept(null);
                 return true;
             }
             else
-                logger.log(Level.FINE, () -> "Ignoring search for unknown PV '" + name + "'");
+                logger.log(Level.FINER, () -> "Ignoring search for unknown PV '" + name + "'");
         }
         return false;
     }
@@ -255,6 +285,17 @@ public class PVAServer implements AutoCloseable
     void register(final ServerTCPHandler tcp_connection)
     {
         tcp_handlers.add(tcp_connection);
+    }
+
+    /** Called by {@link ServerTCPHandler} when authentication changes
+     *  @param tcp_connection TCP connection that has updated authentication
+     *  @param client_auth Client authentication
+     */
+    void updatePermissions(final ServerTCPHandler tcp_connection, final ClientAuthentication client_auth)
+    {
+        logger.log(Level.FINE, () -> tcp_connection + " authentication changed: " + client_auth);
+        for (ServerPV pv : pv_by_name.values())
+            pv.updatePermissions(tcp_connection, client_auth);
     }
 
     /** @param tcp_connection {@link ServerTCPHandler} that experienced error or client closed it */

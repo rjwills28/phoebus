@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2025 Oak Ridge National Laboratory.
+ * Copyright (c) 2019-2026 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -28,7 +28,6 @@ import org.epics.pva.data.PVAStructure;
  *
  *  @author Kay Kasemir
  */
-@SuppressWarnings("nls")
 public class ServerPV implements AutoCloseable
 {
     /** Value used when accessing an RPC PV as a data PV */
@@ -147,6 +146,26 @@ public class ServerPV implements AutoCloseable
             logger.log(Level.WARNING, "Client " + tcp + " requested " + this + " as CID " + cid + " but also " + other);
     }
 
+    /** Called by CertificateStatusMonitor via ServerTCPHandler and PVAServer
+     *  @param tcp {@link ServerTCPHandler} with new client authentication info
+     *  @param client_auth {@link ClientAuthentication}
+     */
+    void updatePermissions(final ServerTCPHandler tcp, final ClientAuthentication client_auth)
+    {
+        // Is PV accessed via that TCP/TLS connection?
+        final Integer cid = cid_by_client.get(tcp);
+        if (cid != null)
+        {
+            // Does the client have write access?
+            final boolean writable = isWritable(client_auth);
+            tcp.submit((version, buffer) ->
+            {
+                logger.log(Level.FINE, () ->  "Send ACL " + this + " [CID " + cid + "]" + (writable ? " writable" : " read-only"));
+                AccessRightsChange.encode(buffer, cid, writable);
+            });
+        }
+    }
+
     /** Un-register a client of this PV
      *  @param tcp TCP connection to client
      *  @param cid Client's ID for this PV (-1 to remove any)
@@ -154,13 +173,17 @@ public class ServerPV implements AutoCloseable
     void removeClient(final ServerTCPHandler tcp, final int cid)
     {
         // Stop associating PV with that TCP connection
-        final Integer other = cid_by_client.remove(tcp);
-        if (cid == -1)
-            logger.log(Level.FINE, "Client " + tcp + " released " + this + " [CID was " + other + "]");
-        else if (other != null  &&  other.intValue() == cid)
+        final Integer original_cid = cid_by_client.remove(tcp);
+        // Did we never deal with this PV via that TCP connection?
+        if (cid == -1  &&  original_cid == null)
+            return;
+        else if (cid == -1)
+            logger.log(Level.FINE, "Client " + tcp + " released " + this + " [CID was " + original_cid + "]");
+        else if (original_cid != null  &&  original_cid.intValue() == cid)
             logger.log(Level.FINE, "Client " + tcp + " released " + this + " [CID " + cid + "]");
         else
-            logger.log(Level.WARNING, "Client " + tcp + " released " + this + " as CID " + cid + " instead of " + other);
+            // Our memory of the cid differs from what the client now uses to release the PV?!?
+            logger.log(Level.WARNING, "Client " + tcp + " released " + this + " as CID " + cid + " instead of " + original_cid);
 
         // Delete all subscriptions to this PV from that TCP connection
         // A perfect client would separately clear the subscription,
@@ -232,10 +255,13 @@ public class ServerPV implements AutoCloseable
         }
     }
 
-    /** @return Is the PV writable? */
-    public boolean isWritable()
+    /** @param client_auth Client authentication
+     *  @return Is the PV writable by that client?
+     */
+    public boolean isWritable(final ClientAuthentication client_auth)
     {
-        return writable.get();
+        // Is PV fundamentally writable, and is the client authorized?
+        return writable.get()  &&  server.hasWriteAccess(getName(), client_auth);
     }
 
     /** Update write access
@@ -246,11 +272,16 @@ public class ServerPV implements AutoCloseable
      */
     public void setWritable(final boolean writable)
     {
+        // Change in overall write support of this PV?
         if (write_handler != READONLY_WRITE_HANDLER  &&  this.writable.compareAndSet(!writable, writable))
         {
+            // For each TCP/TLS connection, get authenticated user and compute access rights
             logger.log(Level.FINE, () ->  "Update ACL " + this + (writable ? " to writable" : " to read-only"));
             cid_by_client.forEach((tcp, cid) ->
-                tcp.submit((version, buffer) -> AccessRightsChange.encode(buffer, cid, writable)));
+            {
+                boolean effective = isWritable(tcp.getClientAuthentication());
+                tcp.submit((version, buffer) -> AccessRightsChange.encode(buffer, cid, effective));
+            });
         }
     }
 

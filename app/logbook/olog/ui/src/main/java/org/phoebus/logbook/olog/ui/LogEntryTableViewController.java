@@ -43,7 +43,7 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.phoebus.applications.logbook.authentication.OlogAuthenticationScope;
-import org.phoebus.core.websocket.WebSocketMessageHandler;
+import org.phoebus.core.websocket.client.WebSocketMessageHandler;
 import org.phoebus.framework.jobs.JobManager;
 import org.phoebus.logbook.LogClient;
 import org.phoebus.logbook.LogEntry;
@@ -64,6 +64,7 @@ import org.phoebus.ui.dialog.DialogHelper;
 import org.phoebus.ui.dialog.ExceptionDetailsErrorDialog;
 
 import java.io.IOException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -174,6 +175,7 @@ public class LogEntryTableViewController extends LogbookSearchController impleme
 
     @FXML
     public void initialize() {
+        super.initialize();
 
         logEntryDisplayController.setLogEntryTableViewController(this);
 
@@ -407,6 +409,8 @@ public class LogEntryTableViewController extends LogbookSearchController impleme
         params.put("sort", advancedSearchViewController.getSortAscending() ? "up" : "down");
         params.put("from", Integer.toString(pagination.getCurrentPageIndex() * pageSizeProperty.get()));
         params.put("size", Integer.toString(pageSizeProperty.get()));
+        params.put("tz", ZoneId.systemDefault().getId());
+
 
         searchInProgress.set(true);
         logger.log(Level.INFO, "Single search: " + queryString);

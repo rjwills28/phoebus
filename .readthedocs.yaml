@@ -4,12 +4,21 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3.12"
+  apt_packages:
+    - maven
+    - openjdk-25-jdk
+  jobs:
+    pre_build:
+      - mvn clean install
 
 # Build from the docs/ directory with Sphinx
 sphinx:
   configuration: docs/source/conf.py
+  builder: html
+  fail_on_warning: false
 
-# Explicitly set the version of Python and its requirements
+# Install Python dependencies from pyproject.toml in docs/
 python:
   install:
-    - requirements: docs/source/requirements.txt
+    - method: pip
+      path: docs

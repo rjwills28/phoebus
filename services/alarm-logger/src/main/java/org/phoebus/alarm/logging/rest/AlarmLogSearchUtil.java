@@ -11,6 +11,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,7 +77,7 @@ public class AlarmLogSearchUtil {
      */
     public static List<AlarmLogMessage> search(ElasticsearchClient client,
                                                Map<String, String> searchParameters) {
-        logger.info("searching for alarm log entires : " +
+        logger.fine("searching for alarm log entires : " +
                 searchParameters.entrySet().stream().map(e -> e.getKey() + ": " + e.getValue()).collect(Collectors.joining()));
 
         Instant fromInstant = Instant.EPOCH;
@@ -237,8 +238,9 @@ public class AlarmLogSearchUtil {
                     Query.of(q -> q
                             .range(RangeQuery.of(r -> r
                                             .field("message_time")
-                                            .from(formatter.format(finalFromInstant))
-                                            .to(formatter.format(finalToInstant))
+                                            .gte(JsonData.of(finalFromInstant.toEpochMilli()))
+                                            .lte(JsonData.of(finalToInstant.toEpochMilli()))
+                                            .format("epoch_millis")
                                     )
                             )
                     )
