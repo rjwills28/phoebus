@@ -229,13 +229,22 @@ public class DisplayRuntimeInstance implements AppInstance
     /** @param show Should the toolbar be shown? */
     void showToolbar(final boolean show)
     {
+        double windowHeight = layout.getScene().getWindow().getHeight();
+        Double toolbarHeight = toolbar.boundsInParentProperty().get().getHeight();
+
         if (show)
         {
             if (! isToolbarVisible())
+            {
+                layout.getScene().getWindow().setHeight(windowHeight+toolbarHeight);
                 layout.setTop(toolbar);
+            }
         }
         else
+        {
             layout.setTop(null);
+            layout.getScene().getWindow().setHeight(windowHeight-toolbarHeight);
+        }
         last_toolbar_visible = show;
     }
 
