@@ -12,11 +12,15 @@ import org.csstudio.display.builder.model.util.ModelResourceUtil;
 import org.csstudio.display.builder.representation.ToolkitRepresentation;
 import org.csstudio.display.builder.runtime.ActionUtil;
 import org.csstudio.display.builder.runtime.RuntimeUtil;
+import org.csstudio.display.builder.runtime.app.DisplayInfo;
+import org.csstudio.display.builder.runtime.app.DisplayRuntimeApplication;
 import org.csstudio.display.builder.runtime.script.ScriptUtil;
 import org.csstudio.display.builder.model.spi.ActionHandler;
 import org.csstudio.display.actions.OpenDisplayAction;
 import org.phoebus.framework.macros.MacroHandler;
 import org.phoebus.framework.macros.MacroOrSystemProvider;
+import org.phoebus.ui.docking.DockItemWithInput;
+import org.phoebus.ui.docking.DockStage;
 
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -108,10 +112,30 @@ public class OpenDisplayActionHandler implements ActionHandler {
                 {
                     try
                     {
+                        final DockItemWithInput existing_dock_item = DockStage.getDockItemWithInput(
+                                DisplayRuntimeApplication.NAME,
+                                DisplayInfo.forModel(top_model).toURI());
+
                         // Close old representation
                         final Object parent = toolkit.disposeRepresentation(top_model);
                         // Tell toolkit about new model to represent
                         toolkit.representModel(parent, new_model);
+
+                        if (existing_dock_item != null)
+                        {
+                            // Perform window resizing if this is a standalone window
+                            if (existing_dock_item.getDockPane().isStandaloneWindow())
+                            {
+                                double paddingHeight = existing_dock_item.getDockPane().getScene().getWindow().getHeight() -
+                                        top_model.propHeight().getValue();
+                                double paddingWidth = existing_dock_item.getDockPane().getScene().getWindow().getWidth() -
+                                        top_model.propWidth().getValue();
+                                existing_dock_item.getDockPane().getScene().getWindow()
+                                        .setHeight(new_model.propHeight().getValue() + paddingHeight);
+                                existing_dock_item.getDockPane().getScene().getWindow()
+                                        .setWidth(new_model.propWidth().getValue() + paddingWidth);
+                            }
+                        }
                     }
                     catch (Throwable ex)
                     {
