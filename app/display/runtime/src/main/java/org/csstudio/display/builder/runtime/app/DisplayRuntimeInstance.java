@@ -355,6 +355,21 @@ public class DisplayRuntimeInstance implements AppInstance
                 final Future<Void> represented = representation.submit(() -> representModel(model));
                 represented.get();
 
+                // Size needs to account for the border and toolbar.
+                // Using fixed numbers, exact size of border and toolbar unknown
+                // at this time in the code
+                int width_margin = 18;
+                int height_margin = 105;
+                // Don't need to include space for toolbar in standalone
+                if (dock_item.getDockPane().isStandaloneWindow())
+                {
+                    width_margin = 9;
+                    height_margin = 40;
+                }
+                dock_item.getDockPane().getScene().getWindow().setWidth(model.propWidth().getValue() + width_margin);
+                dock_item.getDockPane().getScene().getWindow().setHeight(model.propHeight().getValue() + height_margin);
+
+
                 // Start runtime for the model
                 RuntimeUtil.startRuntime(model);
 
