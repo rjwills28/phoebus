@@ -80,16 +80,14 @@ public class DockItemRepresentation extends JFXRepresentation
         new_stage.setX(x);
         new_stage.setY(y);
 
-        // Size needs to account for the border and toolbar.
         // Using fixed numbers, exact size of border and toolbar unknown
         // at this time in the code
-        int width_margin = 18;
-        int height_margin = 105;
-        // Don't need to include space for toolbar in standalone
+        int width_margin = DockStage.STAGE_MARGIN_WIDTH;
+        int height_margin = DockStage.STAGE_MARGIN_HEIGHT;
         if (model.isStandalone())
         {
-            width_margin = 9;
-            height_margin = 40;
+            width_margin = DockStage.STAGE_STANDALONE_MARGIN_WIDTH;
+            height_margin = DockStage.STAGE_STANDALONE_MARGIN_WIDTH;
         }
         new_stage.setWidth(model.propWidth().getValue() + width_margin);
         new_stage.setHeight(model.propHeight().getValue() + height_margin);

@@ -355,6 +355,14 @@ public class DisplayRuntimeInstance implements AppInstance
                 final Future<Void> represented = representation.submit(() -> representModel(model));
                 represented.get();
 
+                // Resize window to the size of the model plus some margin
+                if (dock_item.getDockPane().isStandaloneWindow()) {
+                    dock_item.getDockPane().getScene().getWindow()
+                            .setWidth(model.propWidth().getValue() + DockStage.STAGE_STANDALONE_MARGIN_WIDTH);
+                    dock_item.getDockPane().getScene().getWindow()
+                            .setHeight(model.propHeight().getValue() + DockStage.STAGE_STANDALONE_MARGIN_HEIGHT);
+                }
+
                 // Start runtime for the model
                 RuntimeUtil.startRuntime(model);
 

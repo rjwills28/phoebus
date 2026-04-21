@@ -70,6 +70,15 @@ public class DockStage
      */
     public static final String ID_MAIN = "DockStage_MAIN";
 
+    /** Add extra space to window size
+     *  Size needs to account for the border and toolbar */
+    public static final int STAGE_MARGIN_WIDTH = 18;
+    public static final int STAGE_MARGIN_HEIGHT = 105;
+    /** Add (small) extra space to window size for standalone windows
+     *  as they don't need toolbars/tabs etc*/
+    public static final int STAGE_STANDALONE_MARGIN_WIDTH = 9;
+    public static final int STAGE_STANDALONE_MARGIN_HEIGHT = 40;
+
     /** Singleton logo */
     private static Image logo = null;
 
