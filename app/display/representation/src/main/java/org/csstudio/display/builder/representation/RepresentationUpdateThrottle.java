@@ -73,8 +73,17 @@ public class RepresentationUpdateThrottle
      */
     private final Set<WidgetRepresentation<?, ?, ?>> updateable = new LinkedHashSet<>();
 
+    private static RepresentationUpdateThrottle INSTANCE;
+
+    public static RepresentationUpdateThrottle getInstance(final Executor gui_executor) {
+        if(INSTANCE == null) {
+            INSTANCE = new RepresentationUpdateThrottle(gui_executor);
+        }
+        return INSTANCE;
+    }
+
     /** @param gui_executor Executor for UI thread */
-    public RepresentationUpdateThrottle(final Executor gui_executor)
+    private RepresentationUpdateThrottle(final Executor gui_executor)
     {
         final String name = "RepresentationUpdateThrottle" + instance.incrementAndGet();
         logger.log(Level.FINE, "Create " + name);
