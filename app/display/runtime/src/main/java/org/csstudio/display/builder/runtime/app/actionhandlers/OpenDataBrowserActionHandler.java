@@ -10,6 +10,7 @@ import org.csstudio.display.builder.model.Widget;
 import org.csstudio.display.builder.model.spi.ActionHandler;
 import org.csstudio.display.builder.model.spi.ActionInfo;
 import org.csstudio.display.builder.representation.ToolkitRepresentation;
+import org.csstudio.display.builder.runtime.app.DisplayRuntimeInstance;
 import org.csstudio.trends.databrowser3.DataBrowserApp;
 import org.csstudio.trends.databrowser3.DataBrowserInstance;
 import org.csstudio.trends.databrowser3.model.PVItem;
@@ -17,6 +18,7 @@ import org.phoebus.framework.macros.MacroHandler;
 import org.phoebus.framework.macros.MacroValueProvider;
 import org.phoebus.framework.util.ResourceParser;
 import org.phoebus.framework.workbench.ApplicationService;
+import org.phoebus.ui.docking.DockPane;
 import org.phoebus.util.time.TimeParser;
 import org.phoebus.util.time.TimeRelativeInterval;
 import org.phoebus.util.time.TimestampFormats;
@@ -70,7 +72,15 @@ public class OpenDataBrowserActionHandler implements ActionHandler {
             }
 
             toolkit.submit(() ->
-            {   // Create databrowser instance
+            {
+                DockPane dockPane = DisplayRuntimeInstance.ofDisplayModel(model).getDockItem().getDockPane();
+                if (dockPane.isStandaloneWindow()) {
+                    // Open the file in the main Phoebus window if launched from
+                    // a standalone screen.
+                    DockPane.setActiveDockPane(DockPane.getMainDockPane());
+                }
+
+                // Create databrowser instance
                 DataBrowserInstance instance = ApplicationService.createInstance(DataBrowserApp.NAME,
                         ResourceParser.createResourceURI(final_pv_uri));
 
