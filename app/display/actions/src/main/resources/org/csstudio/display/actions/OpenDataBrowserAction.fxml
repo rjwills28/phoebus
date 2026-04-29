@@ -13,9 +13,10 @@
       <TextField fx:id="description" text="Open Data Browser" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" />
       <Label text="%ActionsDialog_PVNames" GridPane.rowIndex="1" />
       <TextField fx:id="pvNames" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" />
-      <Label text="%ActionsDialog_Timeframe" GridPane.rowIndex="2" />
-      <TextField fx:id="timeframe" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" />
-      <Label text="%ActionsDialog_Timeframe_Help" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"  GridPane.rowIndex="3" />
+      <Label text="%ActionsDialog_PVNames_Help" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"  GridPane.rowIndex="2" />
+      <Label text="%ActionsDialog_Timeframe" GridPane.rowIndex="3" />
+      <TextField fx:id="timeframe" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" />
+      <Label text="%ActionsDialog_Timeframe_Help" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"  GridPane.rowIndex="4" />
    </children>
    <columnConstraints>
       <ColumnConstraints />
