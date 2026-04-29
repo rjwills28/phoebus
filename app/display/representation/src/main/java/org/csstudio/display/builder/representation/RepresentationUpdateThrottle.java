@@ -39,7 +39,7 @@ import java.util.logging.Level;
 public class RepresentationUpdateThrottle
 {
     /** Instance counter to aid in debugging the throttle start/shutdown */
-    private static final AtomicInteger instance = new AtomicInteger();
+    private static final AtomicInteger reference_count = new AtomicInteger();
 
     /** Period in seconds for logging update performance */
     private static final int performance_log_period_secs = Preferences.performance_log_period_secs;
@@ -86,13 +86,14 @@ public class RepresentationUpdateThrottle
         if(INSTANCE == null) {
             INSTANCE = new RepresentationUpdateThrottle(gui_executor);
         }
+        reference_count.incrementAndGet();
         return INSTANCE;
     }
 
     /** @param gui_executor Executor for UI thread */
     private RepresentationUpdateThrottle(final Executor gui_executor)
     {
-        final String name = "RepresentationUpdateThrottle" + instance.incrementAndGet();
+        final String name = "RepresentationUpdateThrottle";
         logger.log(Level.FINE, "Create " + name);
         this.gui_executor = gui_executor;
         throttle_thread = new Thread(this::doRun);
@@ -234,7 +235,14 @@ public class RepresentationUpdateThrottle
     /** Shutdown the throttle thread and wait for it to exit */
     public void shutdown()
     {
+        reference_count.decrementAndGet();
+        // Only shutdown if this is the last reference
+        if (reference_count.get() != 0){
+            return;
+        }
+
         run = false;
+        INSTANCE = null;
         synchronized (updateable)
         {
             updateable.notifyAll();
