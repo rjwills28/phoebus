@@ -46,9 +46,8 @@ public class OpenDataBrowserActionHandler implements ActionHandler {
             String[] pvs = pv_names.split(" ");
             for (int i = 0; i < pvs.length; i++) {
                 try {
-                    String pv_name = pvs[i];
-                    pv_name = MacroHandler.replace(macros, pv_name);
-                    pv_uri = pv_uri.concat(pv_name);
+                    pvs[i] = MacroHandler.replace(macros, pvs[i]);
+                    pv_uri = pv_uri.concat(pvs[i]);
                     if (i < pvs.length - 1)
                         pv_uri = pv_uri.concat("&");
                 } catch (Exception ignore) {
