@@ -235,9 +235,8 @@ public class RepresentationUpdateThrottle
     /** Shutdown the throttle thread and wait for it to exit */
     public void shutdown()
     {
-        reference_count.decrementAndGet();
         // Only shutdown if this is the last reference
-        if (reference_count.get() != 0){
+        if (reference_count.decrementAndGet() != 0){
             return;
         }
 
