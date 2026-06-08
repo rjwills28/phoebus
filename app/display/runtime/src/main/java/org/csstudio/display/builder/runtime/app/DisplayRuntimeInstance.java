@@ -99,6 +99,8 @@ public class DisplayRuntimeInstance implements AppInstance
     /** Toolbar button for navigation */
     private ButtonBase navigate_backward, navigate_forward;
 
+    private Boolean auto_size_stage = false;
+
     public String getDisplayName() {
         return active_model.getDisplayName();
     }
@@ -129,13 +131,19 @@ public class DisplayRuntimeInstance implements AppInstance
             {
                 boolean standalone = false;
                 if (prefTarget.startsWith("standalone"))
+                {
                     standalone = true;
+                    auto_size_stage = true;
+                }
                 // Open new Stage in which this app will be opened, its DockPane is a new active one
                 final Stage new_stage = new Stage();
                 if (prefTarget.startsWith("window@"))
                     DockStage.configureStage(new_stage, new Geometry(prefTarget.substring(7)), standalone);
-                else if (prefTarget.startsWith("standalone@"))
+                else if (prefTarget.startsWith("standalone@")) {
                     DockStage.configureStage(new_stage, new Geometry(prefTarget.substring(11)), standalone);
+                    // Do not autosize the stage to the screen size if the user has specified the dimensions
+                    auto_size_stage = false;
+                }
                 else
                     DockStage.configureStage(new_stage, new Geometry(null), standalone);
                 new_stage.show();
@@ -355,15 +363,13 @@ public class DisplayRuntimeInstance implements AppInstance
                 final Future<Void> represented = representation.submit(() -> representModel(model));
                 represented.get();
 
-                if (dock_item.getDockPane().isStandaloneWindow()) {
-                    double xMargin = dock_item.getDockPane().getScene().getWindow().getWidth()
-                            - dock_item.getDockPane().getScene().getWidth() + 2;
-                    double yMargin = dock_item.getDockPane().getScene().getWindow().getHeight()
-                            - dock_item.getDockPane().getScene().getHeight() + 2;
-                    dock_item.getDockPane().getScene().getWindow()
-                            .setWidth(model.propWidth().getValue() + xMargin);
-                    dock_item.getDockPane().getScene().getWindow()
-                            .setHeight(model.propHeight().getValue() + yMargin);
+                if (auto_size_stage) {
+                    double xMargin = (int) (dock_item.getDockPane().getScene().getWindow().getWidth()
+                            - dock_item.getDockPane().getScene().getWindow().getScene().getWidth() + 2);
+                    double yMargin = (int) (dock_item.getDockPane().getScene().getWindow().getHeight()
+                            - dock_item.getDockPane().getScene().getWindow().getScene().getHeight() + 2);
+                    dock_item.getDockPane().getScene().getWindow().setWidth(model.propWidth().getValue() + xMargin);
+                    dock_item.getDockPane().getScene().getWindow().setHeight(model.propHeight().getValue() + yMargin);
                 }
 
                 // Start runtime for the model

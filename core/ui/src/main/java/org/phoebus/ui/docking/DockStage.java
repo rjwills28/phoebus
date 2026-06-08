@@ -184,6 +184,9 @@ public class DockStage
         stage.setX(geometry.x);
         stage.setY(geometry.y);
 
+        // Size stage to scene
+        stage.sizeToScene();
+
         // Force window to be visible
         stage.show();
 
