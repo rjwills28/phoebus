@@ -586,10 +586,6 @@ public class PhoebusApplication extends Application {
      * @throws Exception on error
      */
     private void handleParameters(final List<String> parameters) throws Exception {
-        if (parameters.contains("-clean"))
-        {   // Clean removes everything, including 'Welcome'
-            return;
-        }
         // List of applications to launch as specified via cmd line args
         final List<String> launchApps = new ArrayList<>();
 
@@ -609,6 +605,8 @@ public class PhoebusApplication extends Application {
                     throw new Exception("Missing -resource resource file name");
                 final URI resource = ResourceParser.createResourceURI(parametersIterator.next());
                 launchResources.add(resource);
+            } else if (cmd.equals("-clean")) {
+                // Valid command but nothing to be done
             } else
                 logger.log(Level.WARNING, "Ignoring launch parameter '" + cmd + "'");
         }
