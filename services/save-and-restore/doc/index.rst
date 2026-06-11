@@ -5,7 +5,7 @@ The save-and-restore service implements service as a collection
 of REST endpoints. These can be used by clients to manage configurations (aka save sets) and
 snapshots, to compare snapshots and to restore PV values from snapshots.
 
-The service is packaged as a self-contained Spring Boot jar file. External dependencies are limited to a JVM (Java 17+)
+The service is packaged as a self-contained Spring Boot jar file. External dependencies are limited to a JVM (Java 21+)
 and a running instance of Elasticsearch (8.x).
 
 Running the service
@@ -126,6 +126,14 @@ Nodes of type CONFIGURATION and SNAPSHOT will also have a ``description`` field.
 A special case is the root node as it has a fixed unique id:
 
 **.../node/44bef5de-e8e6-4014-af37-b8f6c8a939a2**
+
+The root node may also be retrieved using:
+
+**.../root**
+
+or
+
+**.../node/root***
 
 Retrieve multiple nodes
 """""""""""""""""""""""
@@ -264,6 +272,10 @@ The a list of all the children nodes of the node with id `{uniqueNodeId}`
             "tags": []
         }
     ]
+
+One may retrieve the child nodes of the root node using:
+
+**.../node/root/children**
 
 .. _Get a configuration:
 
@@ -910,15 +922,15 @@ the list is empty, all PVs in the snapshot were restored correctly.
         }
     ]
 
-Restore from snapshot node
-""""""""""""""""""""""""""
+Restore from snapshot or composite snapshot node
+""""""""""""""""""""""""""""""""""""""""""""""""
 
-**.../restore/node?nodeId=<snapshot node id>**
+**.../restore/node?nodeId=<node id>**
 
 Method: POST
 
 This is the same as the endpoint to restore from snapshot items, however it uses snapshot items
-from an existing node rather than providing them explicitly. It returns the same result.
+from an existing snapshot node or composite snapshot rather than providing them explicitly. It returns the same result.
 
 Compare Endpoint
 ----------------
