@@ -34,6 +34,7 @@ public class SPIFuncNode implements Node
      */
     public SPIFuncNode(final FormulaFunction function, final Node nodeArray[])
     {
+        System.out.println("SPIFuncNode "+function);
         this.function = function;
         this.args = nodeArray;
         // Should be called with the correct number of arguments
@@ -44,10 +45,12 @@ public class SPIFuncNode implements Node
     @Override
     public VType eval()
     {
+        System.out.println("SPIFuncNode eval()");
         // Evaluate all arguments
         final VType arglist[] = new VType[args.length];
-        for (int i = 0; i < arglist.length; i++)
+        for (int i = 0; i < arglist.length; i++) {
             arglist[i] = args[i].eval();
+        }
 
         try
         {

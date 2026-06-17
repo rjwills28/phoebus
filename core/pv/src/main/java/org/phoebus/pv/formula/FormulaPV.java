@@ -53,8 +53,10 @@ public class FormulaPV extends PV
         try
         {
             // Parse expression...
+            System.out.println("#### Formula PV "+expression);
             formula = new Formula(expression, true);
 
+            System.out.println("#### Formula PV callng eval() ");
             final VType value = formula.eval();
             notifyListenersOfValue(value);
 
@@ -66,6 +68,7 @@ public class FormulaPV extends PV
                 vars[i].setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
                 inputs[i] = new FormulaInput(this, vars[i]);
             }
+            System.out.println("#### Formula PV numbeer of inputs "+inputs.length);
 
             // Set initial value
             doUpdate();
@@ -112,6 +115,7 @@ public class FormulaPV extends PV
         // try { Thread.sleep(100); } catch (InterruptedException e) {}
 
         final VType value = formula.eval();
+        System.out.println("#### Formula PV doUpdate() value "+value);
         notifyListenersOfValue(value);
     }
 
