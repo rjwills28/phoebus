@@ -650,6 +650,7 @@ public class JFXRepresentation extends ToolkitRepresentation<Parent, Node>
     /** Handle changes in on-screen size of this representation */
     private void handleViewportChanges()
     {
+        
         final int view_width = (int) model_root.getWidth();
         final int view_height = (int) model_root.getHeight();
 
@@ -662,7 +663,7 @@ public class JFXRepresentation extends ToolkitRepresentation<Parent, Node>
             model_width = copy.propWidth().getValue();
             model_height = copy.propHeight().getValue();
         }
-
+        System.out.println("### Here "+model_height+"vs "+view_height);
         // If on-screen viewport is larger than model,
         // grow the scroll_body so that the complete area is
         // filled with the background color
@@ -676,6 +677,15 @@ public class JFXRepresentation extends ToolkitRepresentation<Parent, Node>
                          ? view_height-SCROLLBAR_ADJUST
                          : model_height;
 
+        if (view_width >= model_width && model_width != 0)
+            model_root.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        else
+            model_root.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        if (view_height >= model_height && model_height != 0)
+            model_root.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        else
+            model_root.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         // Does not consider zooming.
         // If the widget_pane is zoomed 'out', e.g. 50%,
         // the widget_pane will only be half as large
@@ -687,6 +697,7 @@ public class JFXRepresentation extends ToolkitRepresentation<Parent, Node>
         //        widget_parent.setMinWidth(show_x / zoom);
         //        widget_parent.setMinHeight(show_y / zoom);
         widget_pane.setMinSize(show_x, show_y);
+        
     }
 
     /** Update lines that indicate model's size in edit mode */
