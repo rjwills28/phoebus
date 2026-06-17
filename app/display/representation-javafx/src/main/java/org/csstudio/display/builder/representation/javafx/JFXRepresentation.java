@@ -663,7 +663,7 @@ public class JFXRepresentation extends ToolkitRepresentation<Parent, Node>
             model_width = copy.propWidth().getValue();
             model_height = copy.propHeight().getValue();
         }
-        System.out.println("### Here "+model_height+"vs "+view_height);
+        //System.out.println("### Here "+model_width+ "vs "+view_width+" or "+widget_pane.getWidth());
         // If on-screen viewport is larger than model,
         // grow the scroll_body so that the complete area is
         // filled with the background color
@@ -721,6 +721,18 @@ public class JFXRepresentation extends ToolkitRepresentation<Parent, Node>
         vert_bound.setStartX(width);
         vert_bound.setEndY(height);
         vert_bound.setEndX(width);
+
+        final int view_width = (int) model_root.getWidth();
+        final int view_height = (int) model_root.getHeight();
+        if (view_width >= width && width != 0)
+            model_root.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        else
+            model_root.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        if (view_height >= height && height != 0)
+            model_root.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        else
+            model_root.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
     }
 
     @Override
