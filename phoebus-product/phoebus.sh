@@ -45,5 +45,5 @@ elif test "${firstarg#*$filter2}" != "$firstarg"; then
     java -Dfile.encoding=UTF-8 -jar $JAR $OPT "$@"
 else
   # Run UI as separate thread
-  java -Dfile.encoding=UTF-8 -jar $JAR $OPT "$@" &
+  java -Dfile.encoding=UTF-8 -jar $JAR $OPT "$@"
 fi
