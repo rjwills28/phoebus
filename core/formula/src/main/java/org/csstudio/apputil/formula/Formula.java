@@ -38,6 +38,7 @@ import org.csstudio.apputil.formula.node.RndNode;
 import org.csstudio.apputil.formula.node.SPIFuncNode;
 import org.csstudio.apputil.formula.node.SubNode;
 import org.csstudio.apputil.formula.spi.FormulaFunction;
+import org.epics.vtype.VString;
 import org.epics.vtype.VType;
 
 /** A formula interpreter.
@@ -136,7 +137,7 @@ public class Formula implements Node
                    final VariableNode[] variables)  throws Exception
     {
         this.formula = formula;
-        System.out.println("#### variables "+variables.length);
+        System.out.println("Formula variables "+variables.length);
         if (variables == null)
             this.variables = null;
         else
@@ -180,7 +181,10 @@ public class Formula implements Node
     @Override
     public VType eval()
     {
-        return tree.eval();
+        VType n = tree.eval();
+        //System.out.println("##### Adding "+((VString) n).getValue());
+        //variables.add(new VariableNode( ((VString) n).getValue()));
+        return n;
     }
 
     /** {@inheritDoc} */
@@ -234,36 +238,48 @@ public class Formula implements Node
             final String name = buf.toString();
             result = findVariable(name);
         }
-        //else if (s.get() == 'p'){
-        //    s.next(false);
-        //    if (s.get() == 'v'){
-        //        s.next(false);
-         //       if (s.get() == '('){
-         //           int bracketCount = 1;
-         //           char last = s.get();
-         //           s.next(false);
-         //           while (!s.isDone()  &&  (bracketCount != 0)){
-         //               last = s.get();
-         //               
-         //              if (last == '(') 
-         //                   bracketCount = bracketCount + 1;
-         //               else if (last == ')') {
-         //                   bracketCount = bracketCount - 1;
-         //                   if (bracketCount == 0) {
-         //                       s.next(false);
-         //                       break;
-         //                   }
-         //               }
-         //               buf.append(last);
-         //               s.next(false);
-         //           }
-         //       }
-         //       final String name = buf.toString();
-         //       System.out.println("####### pv name "+name);
-         //       result = findFunction(s, "concat");
-         //       System.out.println("####### pv result "+result);
-         //   }
-        //}
+        /**
+        else if (s.get() == 'p'){
+            s.next(false);
+            if (s.get() == 'v'){
+                s.next(false);
+                if (s.get() == '('){
+                    int bracketCount = 1;
+                    char last = s.get();
+                    s.next(false);
+                    while (!s.isDone()  &&  (bracketCount != 0)){
+                        last = s.get();
+                        
+                       if (last == '(') 
+                            bracketCount = bracketCount + 1;
+                        else if (last == ')') {
+                            bracketCount = bracketCount - 1;
+                            if (bracketCount == 0) {
+                                s.next(false);
+                                break;
+                            }
+                        }
+                        buf.append(last);
+                        s.next(false);
+                    }
+                }
+                String name = buf.toString();
+                if (name.startsWith("\""))
+                   name = name.replace("\"", "");
+                System.out.println("###### pv() START ###### ");
+                System.out.println("pv name "+name);
+                Scanner ss = new Scanner(name);
+                while (ss.get() != '(')
+                {
+                    ss.next();
+                }
+                Node test = findFunction(ss, "concat");
+                System.out.println("pv function "+test);
+                //result = findVariable(name);
+                result = test;
+                System.out.println("###### pv() DONE ###### ");
+            }
+        } */
         else if (s.get() == '"')
         {
             // "Text Constant"
@@ -315,15 +331,16 @@ public class Formula implements Node
             }
             String name = buf.toString();
             if (s.get() == '(') {
-                System.out.println("### Formula parseConstant calling findFunction");
+                //System.out.println("Formula parseConstant calling findFunction on: "+s.toString());
                 result = findFunction(s, name);
-                System.out.println("### Formula parseConstant result "+result);
             }
             else
                 result = findVariable(name);
         }
         if (negative)
             return new SubNode(new ConstantNode(0), result);
+        
+        System.out.println(" -> Formula returning "+result);
         return result;
     }
 
@@ -343,7 +360,7 @@ public class Formula implements Node
      */
     private Node findFunction(final Scanner s, final String name) throws Exception
     {
-        System.out.println("### findFunction "+name);
+        System.out.println("findFunction "+name+", with scanner "+s.getOriginalStr());
         final Node [] args = parseArgExpressions(s);
 
         // Check SPI-provided functions.
@@ -384,6 +401,7 @@ public class Formula implements Node
      */
     private Node[] parseArgExpressions(final Scanner s) throws Exception
     {
+        System.out.println("Formula parseArgExpressions");
         Vector<Node> args = new Vector<>();
         if (s.get() != '(')
             throw new Exception("Expected '(', found '" + s.get() + "'");
@@ -412,7 +430,6 @@ public class Formula implements Node
      */
     private Node findVariable(final String name) throws Exception
     {
-        System.out.println("#### findVariable "+variables);
         if (variables != null)
         {   // Find the variable.
             for (VariableNode var : variables)
@@ -428,7 +445,7 @@ public class Formula implements Node
            throw new Exception("Unknown variable '" + name + "'");
         // else: Automatically generate the unknown variable
         final VariableNode var = new VariableNode(name);
-        System.out.println("### adding var ");
+        System.out.println(" Formula adding var "+var);
         variables.add(var);
         return var;
     }
@@ -617,7 +634,7 @@ public class Formula implements Node
      */
     private Node parse() throws Exception
     {
-        System.out.println("#### parse ");
+        System.out.println("Formula parse ");
         final Scanner scanner = new Scanner(formula);
         final Node tree = parseBool(scanner);
         if (! scanner.isDone())

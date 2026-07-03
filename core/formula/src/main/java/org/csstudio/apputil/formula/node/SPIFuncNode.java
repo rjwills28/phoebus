@@ -45,7 +45,7 @@ public class SPIFuncNode implements Node
     @Override
     public VType eval()
     {
-        System.out.println("SPIFuncNode eval()");
+        System.out.println("SPIFuncNode eval() for "+function);
         // Evaluate all arguments
         final VType arglist[] = new VType[args.length];
         for (int i = 0; i < arglist.length; i++) {

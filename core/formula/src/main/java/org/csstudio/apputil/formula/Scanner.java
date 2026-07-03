@@ -25,12 +25,14 @@ class Scanner
     private StringReader reader;
     private int current;
     private boolean done;
+    private String originalStr;
 
     /** Create, initialize with string, position on first character. */
     public Scanner(String s) throws Exception
     {
         reader = new StringReader(s);
         done = false;
+        originalStr = s;
         next();
     }
 
@@ -91,5 +93,9 @@ class Scanner
         if (done)
             return "Scanner is done";
         return String.format("Scanner on '%c'", current);
+    }
+    
+    public String getOriginalStr(){
+        return originalStr;
     }
 }

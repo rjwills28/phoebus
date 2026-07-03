@@ -7,6 +7,8 @@
  ******************************************************************************/
 package org.phoebus.pv.formula;
 
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -47,31 +49,103 @@ public class FormulaPV extends PV
     private Formula formula;
     private volatile FormulaInput[] inputs;
 
-    protected FormulaPV(final String name, final String expression)
+    protected FormulaPV(final String name, String expression)
     {
         super(name);
+        Boolean isPVFunction = false;
         try
         {
             // Parse expression...
-            System.out.println("#### Formula PV "+expression);
-            formula = new Formula(expression, true);
+            System.out.println("\n#### Formula PV "+name+", "+expression);
+            String subExpression = expression;
+            
+            if (expression.contains("pv(")){
+                isPVFunction = true;
+                System.out.println("#######  HERE");
+                StringBuffer buf = new StringBuffer();
+                CharacterIterator it
+                        = new StringCharacterIterator(expression);
+                while (it.current() != CharacterIterator.DONE) {
+                    if (it.current() == 'p'){
+                        it.next();
+                        if (it.current() == 'v') {
+                            it.next();
+                            if (it.current() == '(') {
+                                int bracketCount = 1;
+                                char last = it.current();
+                                it.next();
+                                while (it.current() != CharacterIterator.DONE && (bracketCount != 0)) {
+                                    last = it.current();
+
+                                    if (last == '(')
+                                        bracketCount = bracketCount + 1;
+                                    else if (last == ')') {
+                                        bracketCount = bracketCount - 1;
+                                        if (bracketCount == 0) {
+                                            it.next();
+                                            break;
+                                        }
+                                    }
+                                    buf.append(last);
+                                    it.next();
+                                }
+                            }
+                            String internal = buf.toString();
+                            System.out.println("##### internal "+internal);
+                            subExpression = internal;
+                        }
+                    }
+                    it.next();
+                }
+                formula = new Formula(subExpression, true);
+            } else {
+                formula = new Formula(expression, true);
+            }
+            
+            
 
             System.out.println("#### Formula PV callng eval() ");
-            final VType value = formula.eval();
+            VType value = formula.eval();
             notifyListenersOfValue(value);
 
+            String st = ((VString) value).getValue();
+            System.out.println("#### Formula 1st eval value " + st);
+            ArrayList<VariableNode> varList = new ArrayList<>();
+            if (isPVFunction) {
+                for (VariableNode var: formula.getVariables()) {
+                    varList.add(var);
+                }
+                String newExpression = expression.replace("pv("+subExpression+")", "`"+st+"`");
+                if (varList.size() == 0){
+                    //newExpression = expression.replace("pv("+subExpression+")", "\""+st+"\"");
+                    System.out.println("### newExpression "+newExpression);
+                    formula = new Formula(newExpression, true);
+                    value = formula.eval();
+
+                    System.out.println("#### Formula isPvfunvion eval value " + value);
+                }
+                
+            }
+            
             // Determine variables, connect to PVs
-            final VariableNode vars[] = formula.getVariables();
-            inputs = new FormulaInput[vars.length];
+            VariableNode vars[] = formula.getVariables();
+            for (VariableNode var: formula.getVariables()) {
+                varList.add(var);
+            }
+            inputs = new FormulaInput[varList.size()];
             for (int i=0; i<inputs.length; ++i)
             {   // Initialize 'disconnected' until PV sends first value
-                vars[i].setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
-                inputs[i] = new FormulaInput(this, vars[i]);
+                System.out.println("### FormulaPV Variables "+varList.get(i));
+                varList.get(i).setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
+                inputs[i] = new FormulaInput(this, varList.get(i));
             }
-            System.out.println("#### Formula PV numbeer of inputs "+inputs.length);
+            //inputs[inputs.length-1] = new FormulaInput(this, new VariableNode("temperature:water"));
+            System.out.println("#### Formula PV number of inputs "+inputs.length);
 
             // Set initial value
             doUpdate();
+            
+            
         }
         catch (Exception ex)
         {
@@ -114,8 +188,32 @@ public class FormulaPV extends PV
         // Simulate slow evaluation
         // try { Thread.sleep(100); } catch (InterruptedException e) {}
 
-        final VType value = formula.eval();
-        System.out.println("#### Formula PV doUpdate() value "+value);
+        VType value = formula.eval();
+        System.out.println("#### Formula PV doUpdate() value for "+getName()+" = "+value);
+        /**
+        if (true) {
+            String newExpression = "`"+(((VString)value).getValue())+"`";
+                //newExpression = expression.replace("pv("+subExpression+")", "\""+st+"\"");
+            try {
+                System.out.println("##### newExpression "+newExpression);
+                formula = new Formula(newExpression, true);
+                value = formula.eval();
+                System.out.println("##### value "+value);
+
+                VariableNode vars[] = formula.getVariables();
+                inputs = new FormulaInput[vars.length];
+                for (int i=0; i<inputs.length; ++i)
+                {   // Initialize 'disconnected' until PV sends first value
+                    System.out.println("### FormulaPV Variables "+vars[i]);
+                    vars[i].setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
+                    inputs[i] = new FormulaInput(this, vars[i]);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            
+        }*/
         notifyListenersOfValue(value);
     }
 

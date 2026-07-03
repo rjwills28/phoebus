@@ -50,6 +50,7 @@ public class StringConcatFunction implements FormulaFunction {
     public VType compute(VType... args) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
         Arrays.asList(args).forEach(arg -> {
+            System.out.println("  Concat args "+arg);
             if (isStringArray(arg))
             {
                 stringBuilder.append(getStringArray(arg).stream().collect(Collectors.joining()));

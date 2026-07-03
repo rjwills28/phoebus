@@ -45,9 +45,9 @@ public class PVFunction implements FormulaFunction {
 
     @Override
     public VType compute(VType... args) throws Exception {
-        System.out.println("###############");
-        final String arg = VTypeHelper.toString(args[0]);
-        System.out.println("PVFunction "+ arg);
+        
+        final String arg = "='"+VTypeHelper.toString(args[0])+"'";
+        System.out.println(" ############ PVFunction "+ arg);
         return VString.of(arg, Alarm.none(), Time.now());
     }
 
