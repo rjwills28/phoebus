@@ -441,23 +441,25 @@ public class ActionButtonRepresentation extends RegionBaseRepresentation<Pane, A
                 case NONE:
                     base.setPrefSize(width, height);
                     if (was_ever_transformed)
-                        jfx_node.getTransforms().clear();
+                        base.getTransforms().clear();
                     break;
                 case NINETY:
                     base.setPrefSize(height, width);
-                    jfx_node.getTransforms().setAll(new Rotate(-rotation.getAngle()),
+                    jfx_node.setPrefSize(width, height);
+                    base.getTransforms().setAll(new Rotate(-rotation.getAngle()),
                             new Translate(-height, 0));
                     was_ever_transformed = true;
                     break;
                 case ONEEIGHTY:
                     base.setPrefSize(width, height);
-                    jfx_node.getTransforms().setAll(new Rotate(-rotation.getAngle()),
+                    base.getTransforms().setAll(new Rotate(-rotation.getAngle()),
                             new Translate(-width, -height));
                     was_ever_transformed = true;
                     break;
                 case MINUS_NINETY:
                     base.setPrefSize(height, width);
-                    jfx_node.getTransforms().setAll(new Rotate(-rotation.getAngle()),
+                    jfx_node.setPrefSize(width, height);
+                    base.getTransforms().setAll(new Rotate(-rotation.getAngle()),
                             new Translate(0, -width));
                     was_ever_transformed = true;
                     break;
