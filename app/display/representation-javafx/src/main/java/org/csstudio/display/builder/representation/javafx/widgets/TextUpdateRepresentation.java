@@ -10,6 +10,7 @@ package org.csstudio.display.builder.representation.javafx.widgets;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import javafx.scene.layout.*;
 import org.csstudio.display.builder.model.DirtyFlag;
 import org.csstudio.display.builder.model.UntypedWidgetPropertyListener;
 import org.csstudio.display.builder.model.WidgetProperty;
@@ -29,10 +30,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
@@ -41,7 +38,7 @@ import javafx.scene.transform.Translate;
  *  @author Kay Kasemir
  */
 @SuppressWarnings("nls")
-public class TextUpdateRepresentation extends RegionBaseRepresentation<Control, TextUpdateWidget>
+public class TextUpdateRepresentation extends RegionBaseRepresentation<Pane, TextUpdateWidget>
 {
     // Based on 'interactive' property when widget is created,
     // uses either JFX Label (static) or TextArea (interactive).
@@ -55,6 +52,8 @@ public class TextUpdateRepresentation extends RegionBaseRepresentation<Control, 
     private volatile String value_text = "<?>";
     private volatile Pos pos;
 
+    Control control;
+
     /** Was there ever any transformation applied to the jfx_node?
      *
      *  <p>Used to optimize:
@@ -67,33 +66,35 @@ public class TextUpdateRepresentation extends RegionBaseRepresentation<Control, 
     private long scroll_delay = 1000;
 
     @Override
-    public Control createJFXNode() throws Exception
+    public Pane createJFXNode() throws Exception
     {   // Start out 'disconnected' until first value arrives
         value_text = computeText(null);
 
         if (model_widget.propInteractive().getValue()  &&  !toolkit.isEditMode())
         {
-            final TextArea area = new TextArea();
+            TextArea area = new TextArea();
             area.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
             area.setEditable(false);
             area.getStyleClass().add("text_entry");
             area.setWrapText(true);
             // 'Interactive' widget needs to react to selection,
             // and as remarked in TextEntry this works best 'managed'
-            area.setManaged(true);
-            return area;
+            area.setManaged(true); 
+            control = area;
+            return new Pane(control);
         }
         else
         {
-            final Label label = new Label();
+            Label label = new Label();
             label.getStyleClass().add("text_update");
 
             // This code manages layout,
             // because otherwise for example border changes would trigger
             // expensive Node.notifyParentOfBoundsChange() recursing up the scene graph
             label.setManaged(false);
+            control = label;
 
-            return label;
+            return new Pane(control);
         }
     }
 
@@ -215,44 +216,46 @@ public class TextUpdateRepresentation extends RegionBaseRepresentation<Control, 
             {
             case NINETY:
                 w = height; h = width;
-                jfx_node.getTransforms().setAll(new Rotate(-rotation.getAngle()),
+                control.getTransforms().setAll(new Rotate(-rotation.getAngle()),
                                                 new Translate(-height, 0));
+                jfx_node.setPrefSize(width, height);
                 was_ever_transformed = true;
                 break;
             case ONEEIGHTY:
                 w = width; h = height;
-                jfx_node.getTransforms().setAll(new Rotate(-rotation.getAngle()),
+                control.getTransforms().setAll(new Rotate(-rotation.getAngle()),
                                                 new Translate(-width, -height));
                 was_ever_transformed = true;
                                break;
             case MINUS_NINETY:
                 w = height; h = width;
-                jfx_node.getTransforms().setAll(new Rotate(-rotation.getAngle()),
+                control.getTransforms().setAll(new Rotate(-rotation.getAngle()),
                                                 new Translate(0, -width));
+                jfx_node.setPrefSize(width, height);
                 was_ever_transformed = true;
                 break;
             case NONE:
             default:
                 w = width; h = height;
                 if (was_ever_transformed)
-                    jfx_node.getTransforms().clear();
+                    control.getTransforms().clear();
                 break;
             }
-            if (jfx_node.isManaged())
-                jfx_node.setPrefSize(w,  h);
+            if (control.isManaged())
+                control.setPrefSize(w,  h);
             else
-                jfx_node.resize(w, h);
+                control.resize(w, h);
 
             if (model_widget.propTransparent().getValue())
-                jfx_node.setBackground(null); // No fill
+                control.setBackground(null); // No fill
             else
             {
                 final Color color = JFXUtil.convert(model_widget.propBackgroundColor().getValue());
-                jfx_node.setBackground(new Background(new BackgroundFill(color, CornerRadii.EMPTY, Insets.EMPTY)));
+                control.setBackground(new Background(new BackgroundFill(color, CornerRadii.EMPTY, Insets.EMPTY)));
             }
-            if (jfx_node instanceof Label)
+            if (control instanceof Label)
             {
-                final Label label = (Label) jfx_node;
+                final Label label = (Label) control;
                 Color color = JFXUtil.convert(model_widget.propForegroundColor().getValue());
                 label.setTextFill(color);
                 label.setFont(JFXUtil.convert(model_widget.propFont().getValue()));
@@ -261,7 +264,7 @@ public class TextUpdateRepresentation extends RegionBaseRepresentation<Control, 
             }
             else
             {
-                final TextArea area = (TextArea) jfx_node;
+                final TextArea area = (TextArea) control;
                 final StringBuilder style = new StringBuilder(100);
                 style.append("-fx-text-fill:");
                 JFXUtil.appendWebRGB(style, model_widget.propForegroundColor().getValue()).append(";");
@@ -278,11 +281,11 @@ public class TextUpdateRepresentation extends RegionBaseRepresentation<Control, 
         }
         if (dirty_content.checkAndClear())
         {
-            if (jfx_node instanceof Label)
-                ((Label)jfx_node).setText(value_text);
+            if (control instanceof Label)
+                ((Label)control).setText(value_text);
             else
             {   // Implies 'interactive' mode
-                final TextArea area = (TextArea)jfx_node;
+                final TextArea area = (TextArea)control;
 
                 // Before updating the text, get scroll position just in case we need it later
                 final double top = area.getScrollTop();
@@ -322,8 +325,8 @@ public class TextUpdateRepresentation extends RegionBaseRepresentation<Control, 
                     }, scroll_delay, TimeUnit.MILLISECONDS);
                 }
             }
-            if (! jfx_node.isManaged())
-                jfx_node.layout();
+            if (! control.isManaged())
+                control.layout();
         }
     }
 }
