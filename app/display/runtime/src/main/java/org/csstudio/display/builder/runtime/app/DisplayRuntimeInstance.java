@@ -130,17 +130,18 @@ public class DisplayRuntimeInstance implements AppInstance
         {
             if (isCreateNewStage(prefTarget))
             {
+                String geometry_str = null;
                 boolean standalone = false;
                 if (prefTarget.startsWith(TAG_STANDALONE))
                 {
                     standalone = true;
                     auto_size_stage = true;
+                    geometry_str = "1x1+1+1";
                 }
 
                 // Open new Stage in which this app will be opened, its DockPane is a new active one
                 final Stage new_stage = new Stage();
                 int extract_sub_str = prefTarget.indexOf("@");
-                String geometry_str = null;
                 if (extract_sub_str != -1)
                 {
                     geometry_str = prefTarget.substring(extract_sub_str + 1);
@@ -375,6 +376,8 @@ public class DisplayRuntimeInstance implements AppInstance
                             - window.getScene().getHeight() + 2);
                     window.setWidth(model.propWidth().getValue() + xMargin);
                     window.setHeight(model.propHeight().getValue() + yMargin);
+                    window.setX(model.propX().getValue());
+                    window.setY(model.propY().getValue());
                 }
 
                 // Start runtime for the model
