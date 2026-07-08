@@ -225,6 +225,13 @@ public class JFXRepresentation extends ToolkitRepresentation<Parent, Node>
         model_root = new ScrollPane(scroll_body);
         model_root.setId(MODEL_ROOT_ID);
 
+        // Update background of parent when it changes or, for example,
+        // becomes not null
+        final InvalidationListener background = prop -> {
+            updateBackground();
+        };
+        model_root.parentProperty().addListener(background);
+
         // Middle Button (Wheel press) drag panning started
         final EventHandler<MouseEvent> onMousePressedHandler = evt ->
         {
@@ -888,6 +895,9 @@ public class JFXRepresentation extends ToolkitRepresentation<Parent, Node>
     /** Update background, using background color and grid information from model */
     private void updateBackground()
     {
+        if (model_root.getParent() == null)
+            return;
+        
         final WidgetColor background = model.propBackgroundColor().getValue();
 
         // Setting the "-fx-background:" of the root node propagates
