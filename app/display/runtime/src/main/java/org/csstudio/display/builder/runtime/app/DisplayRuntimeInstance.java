@@ -23,13 +23,13 @@ import java.util.logging.Level;
 
 import javafx.stage.Window;
 import org.csstudio.display.builder.model.DisplayModel;
-import org.csstudio.display.builder.model.Preferences;
 import org.csstudio.display.builder.model.Widget;
 import org.csstudio.display.builder.model.persist.ModelLoader;
 import org.csstudio.display.builder.model.util.ModelResourceUtil;
 import org.csstudio.display.builder.representation.ToolkitListener;
 import org.csstudio.display.builder.representation.javafx.JFXRepresentation;
 import org.csstudio.display.builder.runtime.ActionUtil;
+import org.csstudio.display.builder.runtime.Preferences;
 import org.csstudio.display.builder.runtime.RuntimeUtil;
 import org.phoebus.framework.jobs.JobManager;
 import org.phoebus.framework.jobs.JobMonitor;
@@ -130,22 +130,21 @@ public class DisplayRuntimeInstance implements AppInstance
         {
             if (isCreateNewStage(prefTarget))
             {
+                String geometry_str = null;
                 boolean standalone = false;
-                if (prefTarget.startsWith(TAG_STANDALONE))
-                {
+                auto_size_stage = true;
+                if (Preferences.auto_size_windows_on_launch)
+                    geometry_str = "1x1+1+1";
+                if (prefTarget.startsWith(TAG_STANDALONE)) 
                     standalone = true;
-                    auto_size_stage = true;
-                }
 
                 // Open new Stage in which this app will be opened, its DockPane is a new active one
                 final Stage new_stage = new Stage();
                 int extract_sub_str = prefTarget.indexOf("@");
-                String geometry_str = null;
                 if (extract_sub_str != -1)
                 {
                     geometry_str = prefTarget.substring(extract_sub_str + 1);
                     // Do not autosize the stage to the screen size if the user has specified the dimensions.
-                    // Will only be used if in standalone mode.
                     auto_size_stage = false;
                 }
                 DockStage.configureStage(new_stage, new Geometry(geometry_str), standalone);
@@ -365,16 +364,24 @@ public class DisplayRuntimeInstance implements AppInstance
 
                 final Future<Void> represented = representation.submit(() -> representModel(model));
                 represented.get();
-
-                if (Boolean.TRUE.equals(auto_size_stage))
+                if (Boolean.TRUE.equals(auto_size_stage) && Preferences.auto_size_windows_on_launch)
                 {
                     Window window = dock_item.getDockPane().getScene().getWindow();
                     double xMargin = (int) (window.getWidth()
                             - window.getScene().getWidth() + 2);
                     double yMargin = (int) (window.getHeight()
                             - window.getScene().getHeight() + 2);
+                    // Standard windows require a larger margin for decoration,
+                    // e.g. toolbar, tabs etc
+                    if (!dock_item.getDockPane().isStandaloneWindow())
+                    {
+                        xMargin = xMargin + 5;
+                        yMargin = yMargin + 70;
+                    }
                     window.setWidth(model.propWidth().getValue() + xMargin);
                     window.setHeight(model.propHeight().getValue() + yMargin);
+                    window.setX(model.propX().getValue());
+                    window.setY(model.propY().getValue());
                 }
 
                 // Start runtime for the model
@@ -459,7 +466,7 @@ public class DisplayRuntimeInstance implements AppInstance
         //    but merging macros with those loaded from model file
         //    allows for newly added macros in the display file.
         final Macros environment = new Macros();
-        Preferences.getMacros().forEachSpec(environment::add);
+        org.csstudio.display.builder.model.Preferences.getMacros().forEachSpec(environment::add);
         info.getMacros().forEachSpec(environment::add);
 
         model.expandMacros(environment);
