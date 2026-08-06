@@ -26,6 +26,7 @@ import org.epics.vtype.VDouble;
 import org.epics.vtype.VString;
 import org.epics.vtype.VType;
 import org.phoebus.pv.PV;
+import org.phoebus.pv.PVPool;
 
 /** Formula-based {@link PV}
  *  @author Kay Kasemir
@@ -48,6 +49,7 @@ public class FormulaPV extends PV
 
     private Formula formula;
     private volatile FormulaInput[] inputs;
+    private boolean pvFunctionEvaluated = false;
 
     protected FormulaPV(final String name, String expression)
     {
@@ -56,12 +58,11 @@ public class FormulaPV extends PV
         try
         {
             // Parse expression...
-            System.out.println("\n#### Formula PV "+name+", "+expression);
+            System.out.println("\n#### Formula PV "+name+", ");
             String subExpression = expression;
             
             if (expression.contains("pv(")){
                 isPVFunction = true;
-                System.out.println("#######  HERE");
                 StringBuffer buf = new StringBuffer();
                 CharacterIterator it
                         = new StringCharacterIterator(expression);
@@ -91,7 +92,7 @@ public class FormulaPV extends PV
                                 }
                             }
                             String internal = buf.toString();
-                            System.out.println("##### internal "+internal);
+                            System.out.println(" # internal subexpression: "+internal);
                             subExpression = internal;
                         }
                     }
@@ -102,31 +103,34 @@ public class FormulaPV extends PV
                 formula = new Formula(expression, true);
             }
             
-            
-
-            System.out.println("#### Formula PV callng eval() ");
             VType value = formula.eval();
             notifyListenersOfValue(value);
 
-            String st = ((VString) value).getValue();
-            System.out.println("#### Formula 1st eval value " + st);
+            System.out.println(" # Formula 1st eval value: " + value);
+            
+            
             ArrayList<VariableNode> varList = new ArrayList<>();
             if (isPVFunction) {
                 for (VariableNode var: formula.getVariables()) {
                     varList.add(var);
                 }
-                String newExpression = expression.replace("pv("+subExpression+")", "`"+st+"`");
+                //String newExpression;
+                //if (st.contains("`"))
+                //    newExpression = expression.replace("pv("+subExpression+")", st);
+                //else
+                
                 if (varList.size() == 0){
+                    String st = ((VString) value).getValue();
+                    String newExpression = expression.replace("pv("+subExpression+")", "`"+st+"`");
+                    pvFunctionEvaluated = true;
                     //newExpression = expression.replace("pv("+subExpression+")", "\""+st+"\"");
-                    System.out.println("### newExpression "+newExpression);
+                    System.out.println("# 2nd expression, removing pv(): "+newExpression);
                     formula = new Formula(newExpression, true);
                     value = formula.eval();
-
-                    System.out.println("#### Formula isPvfunvion eval value " + value);
                 }
                 
             }
-            
+
             // Determine variables, connect to PVs
             VariableNode vars[] = formula.getVariables();
             for (VariableNode var: formula.getVariables()) {
@@ -135,12 +139,11 @@ public class FormulaPV extends PV
             inputs = new FormulaInput[varList.size()];
             for (int i=0; i<inputs.length; ++i)
             {   // Initialize 'disconnected' until PV sends first value
-                System.out.println("### FormulaPV Variables "+varList.get(i));
+                System.out.println("# FormulaPV Variables "+varList.get(i));
                 varList.get(i).setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
                 inputs[i] = new FormulaInput(this, varList.get(i));
             }
             //inputs[inputs.length-1] = new FormulaInput(this, new VariableNode("temperature:water"));
-            System.out.println("#### Formula PV number of inputs "+inputs.length);
 
             // Set initial value
             doUpdate();
@@ -189,7 +192,29 @@ public class FormulaPV extends PV
         // try { Thread.sleep(100); } catch (InterruptedException e) {}
 
         VType value = formula.eval();
-        System.out.println("#### Formula PV doUpdate() value for "+getName()+" = "+value);
+        System.out.println("----> Formula PV doUpdate() value for "+getName()+" = "+value);
+        if (getName().contains("pv(") && value instanceof VString && !pvFunctionEvaluated) {
+            VString vstr = (VString) value;
+            System.out.println("# Special case  ");
+            System.out.println(" # Current formula:  "+formula.getFormula());
+            System.out.println(" # Formula eval: "+vstr.getValue());
+            try {
+                String newExpression = "`"+vstr.getValue()+"`";
+                formula = new Formula(newExpression, true);
+                value = formula.eval();
+                System.out.println(" # 3rd eval of new expression:"+newExpression+" = "+value);
+                VariableNode vars[] = formula.getVariables();
+                inputs = new FormulaInput[vars.length];
+                for (int i=0; i<inputs.length; ++i)
+                {   // Initialize 'disconnected' until PV sends first value
+                    System.out.println(" # New FormulaPV Variables "+vars[i]);
+                    vars[i].setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
+                    inputs[i] = new FormulaInput(this, vars[i]);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
         /**
         if (true) {
             String newExpression = "`"+(((VString)value).getValue())+"`";
