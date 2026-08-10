@@ -4,6 +4,7 @@ repos:
     hooks:
     - id: check-yaml
     - id: end-of-file-fixer
+    - id: trailing-whitespace
     # TODO add end of file fixer and whitespace fixer
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.26.1
