@@ -26,7 +26,6 @@ import org.epics.vtype.VDouble;
 import org.epics.vtype.VString;
 import org.epics.vtype.VType;
 import org.phoebus.pv.PV;
-import org.phoebus.pv.PVPool;
 
 /** Formula-based {@link PV}
  *  @author Kay Kasemir
@@ -50,105 +49,38 @@ public class FormulaPV extends PV
     private Formula formula;
     private volatile FormulaInput[] inputs;
     private boolean pvFunctionEvaluated = false;
+    private int level = 0;
 
     protected FormulaPV(final String name, String expression)
     {
         super(name);
-        Boolean isPVFunction = false;
         try
         {
             // Parse expression...
             System.out.println("\n#### Formula PV "+name+", ");
-            String subExpression = expression;
-            
             if (expression.contains("pv(")){
-                isPVFunction = true;
-                StringBuffer buf = new StringBuffer();
-                CharacterIterator it
-                        = new StringCharacterIterator(expression);
-                while (it.current() != CharacterIterator.DONE) {
-                    if (it.current() == 'p'){
-                        it.next();
-                        if (it.current() == 'v') {
-                            it.next();
-                            if (it.current() == '(') {
-                                int bracketCount = 1;
-                                char last = it.current();
-                                it.next();
-                                while (it.current() != CharacterIterator.DONE && (bracketCount != 0)) {
-                                    last = it.current();
-
-                                    if (last == '(')
-                                        bracketCount = bracketCount + 1;
-                                    else if (last == ')') {
-                                        bracketCount = bracketCount - 1;
-                                        if (bracketCount == 0) {
-                                            it.next();
-                                            break;
-                                        }
-                                    }
-                                    buf.append(last);
-                                    it.next();
-                                }
-                            }
-                            String internal = buf.toString();
-                            System.out.println(" # internal subexpression: "+internal);
-                            subExpression = internal;
-                        }
-                    }
-                    it.next();
-                }
-                formula = new Formula(subExpression, true);
-            } else {
+                formula = parsePVFunction(expression);
+            } 
+            else {
                 formula = new Formula(expression, true);
             }
             
             VType value = formula.eval();
             notifyListenersOfValue(value);
-
-            System.out.println(" # Formula 1st eval value: " + value);
             
-            
-            ArrayList<VariableNode> varList = new ArrayList<>();
-            if (isPVFunction) {
-                for (VariableNode var: formula.getVariables()) {
-                    varList.add(var);
-                }
-                //String newExpression;
-                //if (st.contains("`"))
-                //    newExpression = expression.replace("pv("+subExpression+")", st);
-                //else
-                
-                if (varList.size() == 0){
-                    String st = ((VString) value).getValue();
-                    String newExpression = expression.replace("pv("+subExpression+")", "`"+st+"`");
-                    pvFunctionEvaluated = true;
-                    //newExpression = expression.replace("pv("+subExpression+")", "\""+st+"\"");
-                    System.out.println("# 2nd expression, removing pv(): "+newExpression);
-                    formula = new Formula(newExpression, true);
-                    value = formula.eval();
-                }
-                
-            }
 
             // Determine variables, connect to PVs
             VariableNode vars[] = formula.getVariables();
-            for (VariableNode var: formula.getVariables()) {
-                varList.add(var);
-            }
-            inputs = new FormulaInput[varList.size()];
+            inputs = new FormulaInput[vars.length];
             for (int i=0; i<inputs.length; ++i)
             {   // Initialize 'disconnected' until PV sends first value
-                System.out.println("# FormulaPV Variables "+varList.get(i));
-                varList.get(i).setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
-                inputs[i] = new FormulaInput(this, varList.get(i));
+                vars[i].setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
+                inputs[i] = new FormulaInput(this, vars[i]);
             }
-            //inputs[inputs.length-1] = new FormulaInput(this, new VariableNode("temperature:water"));
 
             // Set initial value
-            doUpdate();
-            
-            
+            System.out.println("#### Calling doUpdate");
+            //doUpdate();
         }
         catch (Exception ex)
         {
@@ -192,8 +124,9 @@ public class FormulaPV extends PV
         // try { Thread.sleep(100); } catch (InterruptedException e) {}
 
         VType value = formula.eval();
-        System.out.println("----> Formula PV doUpdate() value for "+getName()+" = "+value);
-        if (getName().contains("pv(") && value instanceof VString && !pvFunctionEvaluated) {
+        System.out.println("----> Formula PV doUpdate() value for "+getName()+" = "+value+", level = "+level);
+        System.out.println("##### n inputs: "+inputs.length);
+        if (getName().contains("pv(") && value instanceof VString && level > 0) {
             VString vstr = (VString) value;
             System.out.println("# Special case  ");
             System.out.println(" # Current formula:  "+formula.getFormula());
@@ -211,35 +144,74 @@ public class FormulaPV extends PV
                     vars[i].setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
                     inputs[i] = new FormulaInput(this, vars[i]);
                 }
+                level = level - 1;
+                //pvFunctionEvaluated = true;
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
-        /**
-        if (true) {
-            String newExpression = "`"+(((VString)value).getValue())+"`";
-                //newExpression = expression.replace("pv("+subExpression+")", "\""+st+"\"");
-            try {
-                System.out.println("##### newExpression "+newExpression);
-                formula = new Formula(newExpression, true);
-                value = formula.eval();
-                System.out.println("##### value "+value);
-
-                VariableNode vars[] = formula.getVariables();
-                inputs = new FormulaInput[vars.length];
-                for (int i=0; i<inputs.length; ++i)
-                {   // Initialize 'disconnected' until PV sends first value
-                    System.out.println("### FormulaPV Variables "+vars[i]);
-                    vars[i].setValue(VDouble.of(Double.NaN, Alarm.disconnected(), Time.now(), Display.none()));
-                    inputs[i] = new FormulaInput(this, vars[i]);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            
-        }*/
         notifyListenersOfValue(value);
+    }
+    
+    private Formula parsePVFunction(String expression) throws Exception {
+        CharacterIterator it
+                = new StringCharacterIterator(expression);
+        while (it.current() != CharacterIterator.DONE) {
+            StringBuffer buf = new StringBuffer();
+            if (it.current() == 'p'){
+                it.next();
+                if (it.current() == 'v') {
+                    it.next();
+                    if (it.current() == '(') {
+                        level = level + 1;
+                        System.out.println(" ##### LEVEL "+level);
+                        int bracketCount = 1;
+                        char last;
+                        it.next();
+                        while (it.current() != CharacterIterator.DONE && (bracketCount != 0)) {
+                            last = it.current();
+                            if (last == '(')
+                                bracketCount = bracketCount + 1;
+                            else if (last == ')') {
+                                bracketCount = bracketCount - 1;
+                                if (bracketCount == 0) {
+                                    it.next();
+                                    break;
+                                }
+                            }
+                            buf.append(last);
+                            it.next();
+                        }
+                    }
+                    String subExpression = buf.toString();
+                    System.out.println(" # internal subexpression: "+subExpression);
+
+                    if (!subExpression.contains("pv(")) {
+                        // Evaluate subexpression
+                        formula = new Formula(subExpression, true);
+                        VType value = formula.eval();
+                        System.out.println(" # Formula 1st eval value: " + value);
+
+                        // Now sub the result back in
+                        if (formula.getVariables().length == 0) {
+                            level = level - 1;
+                            System.out.println(" ##### LEVEL "+level);
+                            pvFunctionEvaluated = true;
+                            String st = ((VString) value).getValue();
+                            expression = expression.replace("pv(" + subExpression + ")", "`" + st + "`");
+                            System.out.println("# 2nd expression, removing pv(): " + expression);
+                        }
+                    } else {
+                        return parsePVFunction(subExpression);
+                    }
+                }
+            }
+            it.next();
+        }
+        if (pvFunctionEvaluated)
+            formula = new Formula(expression, true);
+        System.out.println("### Returning "+formula.getFormula());
+        return formula;
     }
 
     @Override

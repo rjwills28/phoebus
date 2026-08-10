@@ -242,32 +242,10 @@ public class Formula implements Node
             s.next(false);
             if (s.get() == 'v'){
                 s.next(false);
-                if (s.get() == '('){
-                    int bracketCount = 1;
-                    char last = s.get();
-                    s.next(false);
-                    while (!s.isDone()  &&  (bracketCount != 0)){
-                        last = s.get();
-                        
-                       if (last == '(') 
-                            bracketCount = bracketCount + 1;
-                        else if (last == ')') {
-                            bracketCount = bracketCount - 1;
-                            if (bracketCount == 0) {
-                                s.next(false);
-                                break;
-                            }
-                        }
-                        buf.append(last);
-                        s.next(false);
-                    }
+                if (s.get() == '(') {
+                    result = parsePVFunction(s);
+                    System.out.println("# FORMULA PV result:  = " +result);
                 }
-                String name = buf.toString();
-                if (name.startsWith("\""))
-                   name = name.replace("\"", "");
-                result = findVariable(name);
-                //result = new ConstantNode(name);
-                System.out.println("# FORMULA PV result: "+name+ " = " +result);
             }
         }
         else if (s.get() == '"')
@@ -614,6 +592,33 @@ public class Formula implements Node
             else break;
         }
         return n;
+    }
+
+    private Node parsePVFunction(final Scanner s) throws Exception
+    {
+        StringBuffer buf = new StringBuffer();
+        int bracketCount = 1;
+        char last = s.get();
+        s.next(false);
+        while (!s.isDone()  &&  (bracketCount != 0)){
+            last = s.get();
+
+            if (last == '(')
+                bracketCount = bracketCount + 1;
+            else if (last == ')') {
+                bracketCount = bracketCount - 1;
+                if (bracketCount == 0) {
+                    s.next(false);
+                    break;
+                }
+            }
+            buf.append(last);
+            s.next(false);
+        }
+        String name = buf.toString();
+            if (name.startsWith("\""))
+        name = name.replace("\"", "");
+        return findVariable(name);
     }
 
     /** Parse formula.
