@@ -53,7 +53,7 @@ public class Messages
         NLS.initializeMessages(Messages.class);
     }
 
-    private Messages() 
+    private Messages()
     {
         // prevent instantiation
     }
