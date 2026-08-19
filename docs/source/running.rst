@@ -131,4 +131,4 @@ Phoebus displays are built on JavaFX, which will use hardware acceleration where
 
 These settings allow the display to update without waiting for the :abbr:`vblank (vertical blanking interval)` meaning that the monitor's refresh rate is ignored and display updates occur as fast as possible.
 
-Note: these options will only make a difference when running on a dedicated GPU.
+Note: these options will only make a difference when running on a dedicated GPU and have only been tested on Linux operating systems.
