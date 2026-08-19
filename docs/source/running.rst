@@ -124,11 +124,11 @@ will contact the already running instance and have it open the requested file.
 Performance
 -----------
 
-Phoebus displays are built on JavaFX, which will use hardware acceleration wherever possible. If your screens display PVs with high update rates but you notice that the displayed update rates are not keeping up, you may benefit from using the following environment and Java options::
+Phoebus displays are built on JavaFX, which will use hardware acceleration wherever possible. If your screen contains PVs with high update rates and you notice that the display is not keeping up then you may benefit from using the following environment and Java options::
 
    export __GL_SYNC_TO_VBLANK=0 
    export _JAVA_OPTIONS="-Dprism.vsync=false"
 
-These settings allow the display to update without waiting for the vblank, which is to say it is not synchronized with the monitor display rate and hence display updates can occur as fast as we need them to.
+These settings allow the display to update without waiting for the :abbr:`vblank (vertical blanking interval)` meaning that the monitor's refresh rate is ignored and display updates occur as fast as possible.
 
-Note: these environment variables will only make a difference when running on a dedicated GPU
+Note: these options will only make a difference when running on a dedicated GPU.
