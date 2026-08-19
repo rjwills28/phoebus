@@ -1,3 +1,5 @@
+org.phoebus.pv.formula.PVFunction
+
 # 1-arg math functions
 org.csstudio.apputil.formula.math.Abs
 org.csstudio.apputil.formula.math.ACos
@@ -87,3 +89,4 @@ org.csstudio.apputil.formula.enums.EnumOfFunction
 
 # Time
 org.csstudio.apputil.formula.time.TimestampFunction
+

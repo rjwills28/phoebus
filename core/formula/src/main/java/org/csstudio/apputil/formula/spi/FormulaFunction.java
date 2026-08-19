@@ -10,6 +10,7 @@ package org.csstudio.apputil.formula.spi;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.csstudio.apputil.formula.Formula;
 import org.epics.vtype.VType;
 
 /** SPI for contributing a function to the formula
@@ -18,6 +19,8 @@ import org.epics.vtype.VType;
 @SuppressWarnings("nls")
 public interface FormulaFunction
 {
+    Formula formula = null;
+    
     /** @return Name of the Category the function belongs to*/
     public String getCategory();
 
@@ -61,6 +64,12 @@ public interface FormulaFunction
     {
         return getName() + "(" + getArguments().stream().collect(Collectors.joining(",")) + ")";
     }
+    
+    public default void setFormula(Formula formula)
+    {
+        // Does nothing
+    }
+
 
     /**
      * Flag to indicate if the formula function uses a variable list of arguments

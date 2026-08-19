@@ -108,6 +108,7 @@ public class Formula implements Node
         for (FormulaFunction func : ServiceLoader.load(FormulaFunction.class))
         {
             logger.log(Level.FINE, () -> "SPI FormulaFunction " + func.getSignature());
+            System.out.println(" --> SPI FormulaFunction " + func.getSignature());
             spi_functions.put(func.getName(), func);
         }
     }
@@ -320,6 +321,7 @@ public class Formula implements Node
                 !function.isVarArgs())
                 throw new Exception("Function " + function.getSignature() + " takes " +
                                     function.getArguments().size() + " arguments but received " + Arrays.toString(args));
+            function.setFormula(this);
             return new SPIFuncNode(function, args);
         }
         // ... oddballs
@@ -375,7 +377,7 @@ public class Formula implements Node
      *  @return Returns VariableNode
      *  @throws Exception when not found.
      */
-    private Node findVariable(final String name) throws Exception
+    public Node findVariable(final String name) throws Exception
     {
         if (variables != null)
         {   // Find the variable.
@@ -392,6 +394,7 @@ public class Formula implements Node
            throw new Exception("Unknown variable '" + name + "'");
         // else: Automatically generate the unknown variable
         final VariableNode var = new VariableNode(name);
+        System.out.println("##### Adding var: "+name);
         variables.add(var);
         return var;
     }
