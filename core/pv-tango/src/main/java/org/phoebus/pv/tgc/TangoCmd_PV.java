@@ -58,7 +58,8 @@ public class TangoCmd_PV extends PV {
      Return the result after the command is executed。
      */
     public void endCommand(final VType value) {
-        notifyListenersOfValue(value);
+        if (value != null)
+            notifyListenersOfValue(value);
     }
 
 }

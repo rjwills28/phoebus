@@ -3,6 +3,8 @@ package org.phoebus.pv.tga;
 import fr.esrf.Tango.DevFailed;
 import fr.esrf.TangoApi.CallBack;
 import fr.esrf.TangoApi.DeviceAttribute;
+import fr.esrf.TangoApi.AttributeInfoEx;
+import fr.esrf.TangoApi.DeviceProxy;
 import fr.esrf.TangoApi.events.EventData;
 import org.epics.vtype.*;
 import org.phoebus.pv.PV;
@@ -117,10 +119,20 @@ public class TangoAttr_PV extends PV {
                         value = VShort.of(attr_value.extractUChar(), Alarm.none(), time,Display.none());
                         notifyListenersOfValue(value);
                         break;
+                    case DEVENUM:
+                        short index = attr_value.extractShort();
+                        TangoAttrContext attCntxt = TangoAttrContext.getInstance();
+                        DeviceProxy deviceProxy = attCntxt.getDeviceProxy(baseName);
+                        AttributeInfoEx   info = deviceProxy.get_attribute_info_ex(attribute);
+                        value = VString.of(info.getEnumLabel(index), Alarm.none(), time);
+                        notifyListenersOfValue(value);
+                        break;
                     default:
                         throw new IllegalArgumentException("Value " + evt.attr_value + " cannot be converted.");
                 }
             }catch (DevFailed e){
+                throw new RuntimeException(e);
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }

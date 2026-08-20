@@ -4,6 +4,7 @@ import fr.esrf.Tango.DevFailed;
 import fr.esrf.Tango.EventProperties;
 import fr.esrf.TangoApi.AttributeInfoEx;
 import fr.esrf.TangoApi.AttributeProxy;
+import fr.esrf.TangoApi.DeviceProxy;
 import fr.esrf.TangoApi.DeviceAttribute;
 import org.epics.vtype.*;
 import org.phoebus.pv.PV;
@@ -33,6 +34,16 @@ public class TangoAttrContext {
         if (instance == null)
             instance = new TangoAttrContext();
         return instance;
+    }
+
+    public DeviceProxy getDeviceProxy(String baseName) {
+        if (attributeProxys.get(baseName) != null) {
+            return attributeProxys.get(baseName).getDeviceProxy();
+        }
+        else {
+            return null;
+        }
+
     }
 
     public void subscribeAttributeEvent(String deviceName, String attributeName, String baseName, TangoAttr_PV pv) throws DevFailed {

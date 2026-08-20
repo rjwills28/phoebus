@@ -96,6 +96,10 @@ public class TangoCmdContext {
                 value = TangoTypeUtil.convert(res, VByte.class);
                 pv.endCommand(value);
                 break;
+            case VOID:
+                tangoCommand.execute();
+                pv.endCommand(null);
+                break;
             default:
                 throw new IllegalArgumentException("Value " + new_value + " cannot be converted.");
         }
