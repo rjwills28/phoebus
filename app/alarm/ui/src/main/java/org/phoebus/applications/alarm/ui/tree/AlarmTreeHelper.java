@@ -10,6 +10,8 @@ package org.phoebus.applications.alarm.ui.tree;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.phoebus.applications.alarm.client.AlarmClient;
 import org.phoebus.applications.alarm.client.AlarmClientLeaf;
@@ -121,28 +123,34 @@ public class AlarmTreeHelper
 		return true;
 	}
 
+	/**
+	 * Collects {@link AlarmClientLeaf}s items.
+	 * @param items A {@link List} of {@link AlarmTreeItem}s, typically selected by user in the tree view. This could
+	 *              be a mix of leaf and non-leaf nodes. Moreover, leaf nodes could be child nodes of non-leaf nodes
+	 *              in the {@link List}.
+	 * @return A {@link Set} of only {@link AlarmClientLeaf}s, i.e. no duplicates even id user selection would indicate it.
+	 */
 	protected static Set<AlarmClientLeaf> getLeafItems(List<AlarmTreeItem<?>> items){
-		Set<AlarmClientLeaf> leaves = new HashSet<>();
-		items.forEach(item -> leaves.addAll(getLeafItems(item)));
-		return leaves;
+		return items.stream().flatMap(item -> streamLeafItems(item)).collect(Collectors.toSet());
 	}
 
-	protected static Set<AlarmClientLeaf> getLeafItems(final AlarmTreeItem<?> root){
-		Set<AlarmClientLeaf> leaves = new HashSet<>();
-		if(root instanceof AlarmClientLeaf){
-			leaves.add((AlarmClientLeaf) root);
+	/**
+	 * Collects {@link AlarmClientLeaf}s items.
+	 * @param root The start node from where to get {@link AlarmClientLeaf}s. If this is an {@link AlarmClientLeaf}, it
+	 *             will be returned as the sole item in the {@link Set}
+	 * @return A {@link Set} of only {@link AlarmClientLeaf}s.
+	 */
+	protected static Set<AlarmClientLeaf> getLeafItems(final AlarmTreeItem<?> root) {
+		return streamLeafItems(root).collect(Collectors.toSet());
+	}
+
+	private static Stream<AlarmClientLeaf> streamLeafItems(final AlarmTreeItem<?> alarmTreeItem){
+		if (alarmTreeItem instanceof AlarmClientLeaf alarmClientLeaf){
+			return Stream.of(alarmClientLeaf);
 		}
-		else{
-			for(AlarmTreeItem<?> child : root.getChildren()){
-				if(child instanceof AlarmClientLeaf){
-					leaves.add((AlarmClientLeaf)child);
-				}
-				else{
-					leaves.addAll(getLeafItems(child));
-				}
-			}
+		else {
+			return alarmTreeItem.getChildren().stream().flatMap(child -> streamLeafItems(child));
 		}
-		return leaves;
 	}
 
 	/**
