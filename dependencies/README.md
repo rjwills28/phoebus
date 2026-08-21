@@ -76,7 +76,6 @@ especially when combined with limited network access:
 
 To overcome these issues, we list all external dependencies
 that can be obtailed from Maven-Central in the file `dependencies/phoebus-target/pom.xml`.
-The `dependencies/install-jars` subtree allows adding dependencies that cannot be downloaded.
 
 One initial maven build of the dependencies collects the target platform into
 `dependencies/phoebus-target/target/lib`:
