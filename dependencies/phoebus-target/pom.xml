@@ -433,7 +433,7 @@
     <dependency>
       <groupId>org.epics</groupId>
       <artifactId>pbrawclient</artifactId>
-      <version>0.2.2</version>
+      <version>0.2.3</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jgit</groupId>
@@ -633,6 +633,11 @@
           <artifactId>javafx-controls</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.epics</groupId>
+      <artifactId>pbrawclient</artifactId>
+      <version>0.2.3</version>
     </dependency>
   </dependencies>
 
