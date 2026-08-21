@@ -72,6 +72,9 @@ public abstract class ApplianceValueIterator implements ValueIterator {
 
     private final Object lock = new Object();
 
+    protected EpicsMessage savedMessage;
+    protected boolean reuseMessage;
+
     /**
      * Constructs a new ApplianceValueIterator.
      *
@@ -85,6 +88,8 @@ public abstract class ApplianceValueIterator implements ValueIterator {
         this.name = name;
         this.start = start;
         this.end = end;
+        this.reuseMessage = false;
+        this.savedMessage = null;
     }
 
     /**
@@ -144,9 +149,45 @@ public abstract class ApplianceValueIterator implements ValueIterator {
         synchronized (this) {
             if (closed)
                 return null;
-            message = mainIterator.next();
+
+            if (!reuseMessage)
+                message = mainIterator.next();
+            else {
+                message = savedMessage;
+                reuseMessage = false;
+            }
+
+            VType check = checkDisconnect(message);
+            if (check != null)
+                return check;
+            savedMessage = null;
         }
         return extractData(message);
+    }
+
+    /**
+     * Method to check the EpicsMessage for fieldValues containing the
+     * 'cnxlostepsecs' and 'cnxregainedepsecs' signifying a disconnect and reconnect
+     * of the PV. Method extracts the time of the disconnect and returns an
+     * ArchiveVString with the value 'Disconnect'
+     *
+     * @param message Current EpicsMessage to check
+     * @return a VType that can be inserted to indicate a disconnect
+     */
+    VType checkDisconnect(EpicsMessage message) {
+        if (message.getFieldValues().size() > 0 && savedMessage == null) {
+            if (message.getFieldValues().keySet().contains("cnxlostepsecs")
+                    && message.getFieldValues().keySet().contains("cnxregainedepsecs")
+                    && !message.getFieldValues().keySet().contains("startup")) {
+                long lostT = Long.parseLong(message.getFieldValues().get("cnxlostepsecs"));
+                reuseMessage = true;
+                savedMessage = message;
+                return VString.of("Disconnect", Alarm.disconnected(), Time.of(Instant.ofEpochSecond(lostT)));
+            } else
+                return null;
+        } else {
+            return null;
+        }
     }
 
     /**
