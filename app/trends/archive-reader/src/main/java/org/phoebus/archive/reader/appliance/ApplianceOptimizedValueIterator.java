@@ -28,6 +28,7 @@ public class ApplianceOptimizedValueIterator extends ApplianceValueIterator {
     private final int requestedPoints;
     private final boolean useStatistics;
     private boolean firstDisconnnect;
+    private EpicsMessage previousMessage;
 
     /**
      * Constructor that fetches data from appliance archive reader.
@@ -44,13 +45,14 @@ public class ApplianceOptimizedValueIterator extends ApplianceValueIterator {
      * @throws ArchiverApplianceInvalidTypeException if the type of data cannot be returned in optimized format
      * @throws ArchiverApplianceException if it is not possible to load optimised data for the selected PV
      */
-    public ApplianceOptimizedValueIterator(ApplianceArchiveReader reader, String name, Instant start, Instant end,
-            int points, boolean useStatistics) throws ArchiverApplianceException,
+    public ApplianceOptimizedValueIterator(ApplianceArchiveReader reader, String name, Instant start, Instant end, 
+                                           int points, boolean useStatistics) throws ArchiverApplianceException,
             IOException {
         super(reader, name, start, end);
         this.requestedPoints = points;
         this.useStatistics = useStatistics;
         this.firstDisconnnect = false;
+        this.previousMessage = null;
         this.display = determineDisplay(reader, name, end);
         fetchData();
     }
@@ -137,6 +139,7 @@ public class ApplianceOptimizedValueIterator extends ApplianceValueIterator {
 
             savedMessage = null;
             firstDisconnnect = false;
+            previousMessage = message;
         }
         PayloadType type = mainStream.getPayLoadInfo().getType();
         if (type == PayloadType.WAVEFORM_DOUBLE) {
@@ -152,11 +155,11 @@ public class ApplianceOptimizedValueIterator extends ApplianceValueIterator {
             final Time time = TimeHelper.fromInstant(TimestampHelper.fromSQLTimestamp(message.getTimestamp()));
             if (useStatistics) {
                 return VStatistics.of(message.getNumberAt(0).doubleValue(),
-                                      message.getNumberAt(1).doubleValue(),
-                                      message.getNumberAt(2).doubleValue(),
-                                      message.getNumberAt(3).doubleValue(),
-                                      message.getNumberAt(4).intValue(),
-                                      alarm, time, display);
+                        message.getNumberAt(1).doubleValue(),
+                        message.getNumberAt(2).doubleValue(),
+                        message.getNumberAt(3).doubleValue(),
+                        message.getNumberAt(4).intValue(),
+                        alarm, time, display);
             } else {
                 return VNumber.of(message.getNumberAt(0), alarm, time, display);
             }
@@ -182,15 +185,18 @@ public class ApplianceOptimizedValueIterator extends ApplianceValueIterator {
         VType check = super.checkDisconnect(message);
         if (check != null)
             return check;
-
+        
+        boolean repeatedMessage = isRepeatedMessage(previousMessage, message);
         // Check if fieldvalues contains 'connectionChange' (for Optimized data)
         if (message.getFieldValues().size() > 0 && savedMessage == null) {
             if (message.getFieldValues().keySet().contains("connectionChange")) {
                 if (Boolean.parseBoolean(message.getFieldValues().get("connectionChange"))
-                        && message.getNumberAt(4).intValue() == 0) {
+                    //     && message.getNumberAt(4).intValue() == 0
+                        && repeatedMessage
+                ) {
                     if (!firstDisconnnect) {
                         firstDisconnnect = true;
-                        return VString.of("Disconnect in bin", Alarm.disconnected(), 
+                        return VString.of("Disconnect in bin", Alarm.disconnected(),
                                 Time.of(TimestampHelper.fromSQLTimestamp(message.getTimestamp())));
                     } else {
                         return VString.of("", Alarm.disconnected(),
@@ -200,5 +206,20 @@ public class ApplianceOptimizedValueIterator extends ApplianceValueIterator {
             }
         }
         return null;
+    }
+    
+    private static boolean isRepeatedMessage(EpicsMessage oldMessage, EpicsMessage newMessage) {
+        if (oldMessage == null || newMessage == null)
+            return false;
+        
+        if (oldMessage.getNumberAt(0).doubleValue() == newMessage.getNumberAt(0).doubleValue() &&
+                oldMessage.getNumberAt(1).doubleValue()  == newMessage.getNumberAt(1).doubleValue() &&
+                oldMessage.getNumberAt(2).doubleValue()  == newMessage.getNumberAt(2).doubleValue() &&
+                oldMessage.getNumberAt(3).doubleValue() == newMessage.getNumberAt(3).doubleValue() &&
+                oldMessage.getNumberAt(4).intValue() == newMessage.getNumberAt(4).doubleValue()
+        )
+            return true;
+        else
+            return false;
     }
 }
