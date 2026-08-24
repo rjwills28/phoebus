@@ -135,6 +135,9 @@ public abstract class ApplianceValueIterator implements ValueIterator {
     public boolean hasNext() {
         if (closed || mainIterator == null)
             return false;
+        else if (reuseMessage)
+            return true;
+        
         return mainIterator.hasNext();
     }
 
