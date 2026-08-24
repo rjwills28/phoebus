@@ -69,7 +69,7 @@ public class ApplianceOptimizedValueIterator extends ApplianceValueIterator {
         String optimizedOperator = ApplianceArchiveReaderConstants.OP_OPTIMIZED;
         if (AppliancePreferences.ppOptimizedWithLastSample)
             optimizedOperator = ApplianceArchiveReaderConstants.OP_OPTIMIZED_WITH_LAST_SAMPLE;
-        
+
         String optimized = new StringBuilder().append(optimizedOperator)
                 .append(requestedPoints).append('(').append(pvName).append(')').toString();
         super.fetchDataInternal(optimized);
