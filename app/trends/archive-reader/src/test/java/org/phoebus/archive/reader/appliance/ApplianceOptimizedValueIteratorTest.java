@@ -8,12 +8,14 @@ import org.epics.vtype.VNumber;
 import org.epics.vtype.VStatistics;
 import org.epics.vtype.VType;
 import org.junit.jupiter.api.Test;
+import org.phoebus.archive.reader.UnknownChannelException;
 
 import java.time.Instant;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.phoebus.archive.reader.appliance.TestHelper.*;
 
 class ApplianceOptimizedValueIteratorTest {
 
@@ -21,24 +23,10 @@ class ApplianceOptimizedValueIteratorTest {
     private static final Instant END = Instant.now();
     private static final int POINTS = 100;
 
-    private static GenMsgIterator emptyStream() {
-        GenMsgIterator s = mock(GenMsgIterator.class);
-        when(s.iterator()).thenReturn(Collections.emptyIterator());
-        return s;
-    }
-
-    private static GenMsgIterator probeStream(PayloadType type) {
-        EpicsMessage msg = mock(EpicsMessage.class);
-        GenMsgIterator s = mock(GenMsgIterator.class);
-        when(s.iterator()).thenReturn(Collections.singletonList(msg).iterator());
-        when(s.getPayLoadInfo()).thenReturn(PayloadInfo.newBuilder().setType(type).buildPartial());
-        return s;
-    }
-
     @Test
     void fetchUrlContainsOptimizedNOperator() throws Exception {
         FakeDataRetrieval dr = new FakeDataRetrieval(probeStream(PayloadType.SCALAR_DOUBLE));
-        dr.whenPvContains("optimized_", emptyStream());
+        dr.whenPvContains("optimized_", genericStream());
 
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr);
         new ApplianceOptimizedValueIterator(reader, "TEST:PV", START, END, POINTS, false);
@@ -98,5 +86,16 @@ class ApplianceOptimizedValueIteratorTest {
         assertTrue(iter.hasNext());
         VType result = iter.next();
         assertInstanceOf(VNumber.class, result);
+    }
+
+    @Test
+    void emptyIteratorException() {
+        FakeDataRetrieval dr = new FakeDataRetrieval(emptyStream());
+        FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr, false, false);
+        ArchiverApplianceException exception = assertThrows(
+                ArchiverApplianceException.class,
+                () -> new ApplianceOptimizedValueIterator(reader, "TEST:PV", START, END, POINTS, false));
+
+        assertEquals(exception.getMessage(), "Fetched datastream is empty");
     }
 }

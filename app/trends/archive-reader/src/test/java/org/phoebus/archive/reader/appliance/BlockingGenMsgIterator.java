@@ -16,9 +16,16 @@ class BlockingGenMsgIterator implements Iterator<EpicsMessage> {
 
     final CountDownLatch entered = new CountDownLatch(1);
     final CountDownLatch release = new CountDownLatch(1);
+    int count = 0;
 
     @Override
     public boolean hasNext() {
+        // First needs to check that the iterator is not empty
+        // so allow to return true the first time hasNext() is called
+        if (count == 0) {
+            count = count + 1;
+            return true;
+        }
         entered.countDown();
         try {
             release.await();

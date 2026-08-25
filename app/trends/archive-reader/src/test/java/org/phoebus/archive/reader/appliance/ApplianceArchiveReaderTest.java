@@ -1,44 +1,19 @@
 package org.phoebus.archive.reader.appliance;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadType;
-import org.epics.archiverappliance.retrieval.client.EpicsMessage;
-import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.junit.jupiter.api.Test;
+import org.phoebus.archive.reader.UnknownChannelException;
 
 import java.lang.ref.WeakReference;
 import java.time.Instant;
-import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.phoebus.archive.reader.appliance.TestHelper.*;
 
 class ApplianceArchiveReaderTest {
 
     private static final Instant START = Instant.now().minusSeconds(3600);
     private static final Instant END = Instant.now();
-
-    private static GenMsgIterator emptyStream() {
-        GenMsgIterator s = mock(GenMsgIterator.class);
-        when(s.iterator()).thenReturn(Collections.emptyIterator());
-        return s;
-    }
-
-    private static GenMsgIterator probeStream(PayloadType type) {
-        EpicsMessage msg = mock(EpicsMessage.class);
-        GenMsgIterator s = mock(GenMsgIterator.class);
-        when(s.iterator()).thenReturn(Collections.singletonList(msg).iterator());
-        when(s.getPayLoadInfo()).thenReturn(PayloadInfo.newBuilder().setType(type).buildPartial());
-        return s;
-    }
-
-    private static GenMsgIterator countStream(int count) {
-        EpicsMessage msg = mock(EpicsMessage.class);
-        when(msg.getNumberValue()).thenReturn(count);
-        GenMsgIterator s = mock(GenMsgIterator.class);
-        when(s.iterator()).thenReturn(Collections.singletonList(msg).iterator());
-        return s;
-    }
 
     /**
      * When the PV type is SCALAR_ENUM the optimized path throws, getOptimizedValues
@@ -51,7 +26,7 @@ class ApplianceArchiveReaderTest {
         // ncount returns 200 points > requested 100 → NonNumeric path chosen
         FakeDataRetrieval dr = new FakeDataRetrieval(probeStream(PayloadType.SCALAR_ENUM));
         dr.whenPvContains("ncount", countStream(200));
-        dr.whenPvContains("nth_", emptyStream());
+        dr.whenPvContains("nth_", genericStream());
 
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr, false, true);
         Object iter = reader.getOptimizedValues("TEST:PV", START, END, 100);
@@ -63,7 +38,7 @@ class ApplianceArchiveReaderTest {
     void numericScalarUsesOptimizedIterator() throws Exception {
         // probe returns SCALAR_DOUBLE → OptimizedValueIterator succeeds
         FakeDataRetrieval dr = new FakeDataRetrieval(probeStream(PayloadType.SCALAR_DOUBLE));
-        dr.whenPvContains("optimized_", emptyStream());
+        dr.whenPvContains("optimized_", genericStream());
 
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr, false, true);
         Object iter = reader.getOptimizedValues("TEST:PV", START, END, 100);
@@ -73,7 +48,7 @@ class ApplianceArchiveReaderTest {
 
     @Test
     void cancelClosesAllActiveIterators() throws Exception {
-        FakeDataRetrieval dr = new FakeDataRetrieval(emptyStream());
+        FakeDataRetrieval dr = new FakeDataRetrieval(genericStream());
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr);
 
         ApplianceValueIterator iter = (ApplianceValueIterator) reader.getRawValues("TEST:PV", START, END);
@@ -85,7 +60,7 @@ class ApplianceArchiveReaderTest {
 
     @Test
     void weakMapDoesNotPreventGC() throws Exception {
-        FakeDataRetrieval dr = new FakeDataRetrieval(emptyStream());
+        FakeDataRetrieval dr = new FakeDataRetrieval(genericStream());
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr);
 
         WeakReference<ApplianceValueIterator> ref;
@@ -107,7 +82,7 @@ class ApplianceArchiveReaderTest {
     @Test
     void getNumberOfPointsUsesNcountOperator() throws Exception {
         // ncount returns 0 ≤ requested 100 → falls back to RawValueIterator
-        FakeDataRetrieval dr = new FakeDataRetrieval(emptyStream());
+        FakeDataRetrieval dr = new FakeDataRetrieval(genericStream());
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr, false, false);
         reader.getOptimizedValues("TEST:PV", START, END, 100);
 
@@ -117,7 +92,7 @@ class ApplianceArchiveReaderTest {
 
     @Test
     void getRawValuesRegistersIteratorInMap() throws Exception {
-        FakeDataRetrieval dr = new FakeDataRetrieval(emptyStream());
+        FakeDataRetrieval dr = new FakeDataRetrieval(genericStream());
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr);
         ApplianceValueIterator iter = (ApplianceValueIterator) reader.getRawValues("TEST:PV", START, END);
         assertTrue(reader.iterators.containsKey(iter), "iterator should be registered in the map after getRawValues");
@@ -125,7 +100,7 @@ class ApplianceArchiveReaderTest {
 
     @Test
     void closeCallsCancel() throws Exception {
-        FakeDataRetrieval dr = new FakeDataRetrieval(emptyStream());
+        FakeDataRetrieval dr = new FakeDataRetrieval(genericStream());
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr);
         ApplianceValueIterator iter = (ApplianceValueIterator) reader.getRawValues("TEST:PV", START, END);
         assertFalse(iter.closed);
@@ -136,7 +111,7 @@ class ApplianceArchiveReaderTest {
     @Test
     void pointsAtOrBelowCountUsesRawIterator() throws Exception {
         // ncount returns 50, requested count is 100 → points <= count → ApplianceRawValueIterator
-        FakeDataRetrieval dr = new FakeDataRetrieval(emptyStream());
+        FakeDataRetrieval dr = new FakeDataRetrieval(genericStream());
         dr.whenPvContains("ncount(", countStream(50));
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr, false, false);
         Object iter = reader.getOptimizedValues("TEST:PV", START, END, 100);
@@ -148,11 +123,11 @@ class ApplianceArchiveReaderTest {
         // ncount returns 200 > 100 and PV type is SCALAR_DOUBLE → ApplianceStatisticsValueIterator
         FakeDataRetrieval dr = new FakeDataRetrieval(probeStream(PayloadType.SCALAR_DOUBLE));
         dr.whenPvContains("ncount(", countStream(200));
-        dr.whenPvContains("mean_", emptyStream());
-        dr.whenPvContains("std_", emptyStream());
-        dr.whenPvContains("min_", emptyStream());
-        dr.whenPvContains("max_", emptyStream());
-        dr.whenPvContains("count_", emptyStream());
+        dr.whenPvContains("mean_", genericStream());
+        dr.whenPvContains("std_", genericStream());
+        dr.whenPvContains("min_", genericStream());
+        dr.whenPvContains("max_", genericStream());
+        dr.whenPvContains("count_", genericStream());
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr, true, false);
         Object iter = reader.getOptimizedValues("TEST:PV", START, END, 100);
         assertInstanceOf(ApplianceStatisticsValueIterator.class, iter);
@@ -163,7 +138,7 @@ class ApplianceArchiveReaderTest {
         // ncount returns 200 > 100, useStatistics=false → ApplianceMeanValueIterator (not statistics subclass)
         FakeDataRetrieval dr = new FakeDataRetrieval(probeStream(PayloadType.SCALAR_DOUBLE));
         dr.whenPvContains("ncount(", countStream(200));
-        dr.whenPvContains("mean_", emptyStream());
+        dr.whenPvContains("mean_", genericStream());
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr, false, false);
         Object iter = reader.getOptimizedValues("TEST:PV", START, END, 100);
         assertEquals(ApplianceMeanValueIterator.class, iter.getClass(),
@@ -174,12 +149,21 @@ class ApplianceArchiveReaderTest {
     void oldApplianceFallbackOnFetchFailure() throws Exception {
         // Statistics fetch fails mid-construction (std_ stream null → ArchiverApplianceException)
         // → outer catch falls back to ApplianceRawValueIterator
-        FakeDataRetrieval dr = new FakeDataRetrieval(emptyStream());
+        FakeDataRetrieval dr = new FakeDataRetrieval(genericStream());
         dr.whenPvContains("ncount(", countStream(200));
-        dr.whenPvContains("mean_", emptyStream());
+        dr.whenPvContains("mean_", genericStream());
         dr.whenPvContains("std_", null); // null triggers ArchiverApplianceException in statistics iterator
         FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr, true, false);
         Object iter = reader.getOptimizedValues("TEST:PV", START, END, 100);
         assertInstanceOf(ApplianceRawValueIterator.class, iter);
+    }
+
+    @Test
+    void emptyIteratorException() {
+        FakeDataRetrieval dr = new FakeDataRetrieval(emptyStream());
+        FakeApplianceArchiveReader reader = new FakeApplianceArchiveReader(dr, false, false);
+        UnknownChannelException exception = assertThrows(
+                UnknownChannelException.class,
+                () -> reader.getOptimizedValues("TEST:PV", START, END, 100));
     }
 }

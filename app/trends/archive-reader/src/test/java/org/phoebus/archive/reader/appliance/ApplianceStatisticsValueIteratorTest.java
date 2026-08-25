@@ -14,26 +14,14 @@ import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.phoebus.archive.reader.appliance.TestHelper.genericStream;
+import static org.phoebus.archive.reader.appliance.TestHelper.probeStream;
 
 class ApplianceStatisticsValueIteratorTest {
 
     private static final Instant START = Instant.now().minusSeconds(3600);
     private static final Instant END = Instant.now();
     private static final int POINTS = 60;
-
-    private static GenMsgIterator emptyStream() {
-        GenMsgIterator s = mock(GenMsgIterator.class);
-        when(s.iterator()).thenReturn(Collections.emptyIterator());
-        return s;
-    }
-
-    private static GenMsgIterator probeStream(PayloadType type) {
-        EpicsMessage msg = mock(EpicsMessage.class);
-        GenMsgIterator s = mock(GenMsgIterator.class);
-        when(s.iterator()).thenReturn(Collections.singletonList(msg).iterator());
-        when(s.getPayLoadInfo()).thenReturn(PayloadInfo.newBuilder().setType(type).buildPartial());
-        return s;
-    }
 
     private ApplianceStatisticsValueIterator makeIterator(FakeDataRetrieval dr)
             throws ArchiverApplianceException, java.io.IOException {
@@ -55,7 +43,7 @@ class ApplianceStatisticsValueIteratorTest {
 
     @Test
     void fetchIssuesFiveOperatorCalls() throws Exception {
-        FakeDataRetrieval dr = setupDr(emptyStream(), emptyStream(), emptyStream(), emptyStream(), emptyStream());
+        FakeDataRetrieval dr = setupDr(genericStream(), genericStream(), genericStream(), genericStream(), genericStream());
         makeIterator(dr);
 
         assertTrue(dr.pvsCalled.stream().anyMatch(pv -> pv.startsWith("mean_")), "missing mean_ call");
@@ -67,11 +55,11 @@ class ApplianceStatisticsValueIteratorTest {
 
     @Test
     void closeClosesAllFiveStreams() throws Exception {
-        GenMsgIterator meanStream  = emptyStream();
-        GenMsgIterator stdStream   = emptyStream();
-        GenMsgIterator minStream   = emptyStream();
-        GenMsgIterator maxStream   = emptyStream();
-        GenMsgIterator countStream = emptyStream();
+        GenMsgIterator meanStream  = genericStream();
+        GenMsgIterator stdStream   = genericStream();
+        GenMsgIterator minStream   = genericStream();
+        GenMsgIterator maxStream   = genericStream();
+        GenMsgIterator countStream = genericStream();
 
         FakeDataRetrieval dr = setupDr(meanStream, stdStream, minStream, maxStream, countStream);
         ApplianceStatisticsValueIterator iter = makeIterator(dr);
@@ -128,7 +116,7 @@ class ApplianceStatisticsValueIteratorTest {
     @Test
     void nextReturnsNullWhenClosed() throws Exception {
         GenMsgIterator meanStream  = valueStream(1.0, true);
-        FakeDataRetrieval dr = setupDr(meanStream, emptyStream(), emptyStream(), emptyStream(), emptyStream());
+        FakeDataRetrieval dr = setupDr(meanStream, genericStream(), genericStream(), genericStream(), genericStream());
         ApplianceStatisticsValueIterator iter = makeIterator(dr);
 
         iter.close();

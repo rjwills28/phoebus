@@ -116,6 +116,10 @@ public abstract class ApplianceValueIterator implements ValueIterator {
         }
         if (mainStream != null) {
             mainIterator = mainStream.iterator();
+            // Stream is not null but did the stream contain any data?
+            if (!mainIterator.hasNext()) {
+                throw new ArchiverApplianceException("Fetched datastream is empty");
+            }
         } else {
             throw new ArchiverApplianceException("Could not fetch data.");
         }
@@ -307,7 +311,7 @@ public abstract class ApplianceValueIterator implements ValueIterator {
     }
 
     /**
-     * Extract the labels from the given payloadinfo when processing Enum Values. 
+     * Extract the labels from the given payloadinfo when processing Enum Values.
      * EnumLabels list empty if payloadinfo from request without "fetchLatestMetadata" set to true
      *
      * @param info the info to extract the labels

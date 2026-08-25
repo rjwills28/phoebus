@@ -15,14 +15,9 @@ import java.util.concurrent.CountDownLatch;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.phoebus.archive.reader.appliance.TestHelper.emptyStream;
 
 class ApplianceValueIteratorConcurrencyTest {
-
-    private static GenMsgIterator emptyStream() {
-        GenMsgIterator s = mock(GenMsgIterator.class);
-        when(s.iterator()).thenReturn(Collections.emptyIterator());
-        return s;
-    }
 
     private static ValueIterator getRaw(FakeApplianceArchiveReader reader) throws Exception {
         Instant start = Instant.now().minusSeconds(60);
