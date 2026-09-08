@@ -16,10 +16,14 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.text.MessageFormat;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.csstudio.javafx.rtplot.Annotation;
 import org.csstudio.javafx.rtplot.Messages;
@@ -210,24 +214,55 @@ public class AnnotationImpl<XTYPE extends Comparable<XTYPE>> extends Annotation<
         final int y = Double.isFinite(value) ? yaxis.getScreenCoord(value) : yaxis.getScreenRange().getLow();
         final boolean in_range = xaxis.getScreenRange().contains(x);
 
-        String value_text = yaxis.getTicks().formatDetailed(value);
+        String localText = text;
         final String units = trace.getUnits();
-        if (! units.isEmpty())
-            value_text += " " + units;
         String info_text = info;
         if (info_text == null)
             info_text = "";
+        String regex = "\\{2.*?\\}";
+        Matcher matcher = Pattern.compile(regex).matcher(localText);
+        if (matcher.find())
+        {
+            String matchedStr = matcher.group();
+            if (! units.isEmpty())
+                localText = localText.replace(matchedStr, matchedStr + " " + units);
+        }
+        Date date = Date.from((Instant) position);
         String label;
         try
         {
-            label = MessageFormat.format(text,
-                new Object[]
-                {
-                    trace.getName(),
-                    xaxis.getTicks().format(position),
-                    value_text,
-                    info_text
-                });
+            if (text.contains("{1}") && text.contains("{2}"))
+            {   // Set the default format for both value and date
+                label = MessageFormat.format(localText,
+                        trace.getName(),
+                        xaxis.getTicks().format(position),
+                        yaxis.getTicks().formatDetailed(value),
+                        info_text);
+            }
+            else if (text.contains("{1}"))
+            {   // Set default format for the date only
+                label = MessageFormat.format(localText,
+                        trace.getName(),
+                        xaxis.getTicks().format(position),
+                        value,
+                        info_text);
+            }
+            else if (text.contains("{2}"))
+            {   // Set default format for the value only
+                label = MessageFormat.format(localText,
+                        trace.getName(),
+                        date,
+                        yaxis.getTicks().formatDetailed(value),
+                        info_text);
+            }
+            else
+            {   // Allow user format for date and value
+                label = MessageFormat.format(localText,
+                        trace.getName(),
+                        date,
+                        value,
+                        info_text);
+            }
         }
         catch (IllegalArgumentException ex)
         {

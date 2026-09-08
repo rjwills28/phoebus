@@ -18,6 +18,7 @@ public class Messages
     public static String AddAnnotation_Content;
     public static String AddAnnotation_Content_Help;
     public static String AddAnnotation_DefaultText;
+    public static String AddAnnotation_Error;
     public static String AddAnnotation_Info;
     public static String AddAnnotation_NoContent;
     public static String AddAnnotation_NoTraces;

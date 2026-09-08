@@ -30,6 +30,10 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.GridPane;
 
+import java.text.MessageFormat;
+import java.time.Instant;
+import java.util.Date;
+
 /** Dialog for adding annotation to a trace
  *  @param <XTYPE> Data type used for the {@link PlotDataItem}
  *  @author Kay Kasemir
@@ -129,6 +133,16 @@ public class AddAnnotationDialog<XTYPE extends Comparable<XTYPE>> extends Dialog
     		new Alert(AlertType.WARNING, Messages.AddAnnotation_NoContent).showAndWait();
     		return false;
     	}
+        // Check that the format works
+        Date date = Date.from((Instant) Instant.now());
+        try
+        {
+            MessageFormat.format(content, "dummy", date, 2.0);
+        } catch (IllegalArgumentException ex)
+        {
+            new Alert(AlertType.WARNING, Messages.AddAnnotation_Error).showAndWait();
+            return false;
+        }
     	plot.addAnnotation(item, content);
         return true;
     }
