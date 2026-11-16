@@ -15,7 +15,7 @@ import org.phoebus.logbook.Logbook;
 import org.phoebus.logbook.Property;
 import org.phoebus.logbook.Tag;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * @author Eric Berryman taken from shroffk
@@ -77,7 +77,7 @@ public class OlogLog implements LogEntry {
     public OlogLog(XmlLog xmlLog) {
         this.id = xmlLog.getId();
         this.version = xmlLog.getVersion();
-        
+
         owner = xmlLog.getOwner();
         source = xmlLog.getSource();
         level = xmlLog.getLevel();
@@ -291,7 +291,7 @@ public class OlogLog implements LogEntry {
     @XmlElementWrapper(name = "properties")
     @XmlElement(type = XmlProperty.class, name = "property", nillable = true)
     public Collection<Property> getProperties() {
-        return properties == null ? new ArrayList<Property>() : properties;
+        return properties == null ? new ArrayList<>() : properties;
     }
 
     @Override
@@ -301,7 +301,7 @@ public class OlogLog implements LogEntry {
 
     /**
      * Setter for log's XmlProperties.
-     * 
+     *
      * @param properties XmlProperties
      */
     public void setXmlProperties(Collection<Property> properties) {
@@ -312,7 +312,7 @@ public class OlogLog implements LogEntry {
     @XmlElementWrapper(name = "logbooks")
     @XmlElement(type = XmlLogbook.class, name = "logbook")
     public Collection<Logbook> getLogbooks() {
-        return logbooks == null ? new ArrayList<Logbook>() : logbooks;
+        return logbooks == null ? new ArrayList<>() : logbooks;
     }
 
     /**
@@ -332,7 +332,7 @@ public class OlogLog implements LogEntry {
     @XmlElementWrapper(name = "tags")
     @XmlElement(type = XmlTag.class, name = "tag")
     public Collection<Tag> getTags() {
-        return tags == null ? new ArrayList<Tag>() : tags;
+        return tags == null ? new ArrayList<>() : tags;
     }
 
     /**
@@ -358,7 +358,7 @@ public class OlogLog implements LogEntry {
 
     @Override
     public Collection<Attachment> getAttachments() {
-        return attachments == null ? new ArrayList<Attachment>() : attachments;
+        return attachments == null ? new ArrayList<>() : attachments;
     }
 
     /**

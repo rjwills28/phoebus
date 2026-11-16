@@ -3,11 +3,26 @@
   <parent>
     <groupId>org.phoebus</groupId>
     <artifactId>app</artifactId>
-    <version>6.0.0-SNAPSHOT</version>
+    <version>7.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>app-databrowser</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <dependencies>
+    <dependency>
+      <groupId>io.fair-acc</groupId>
+      <artifactId>chartfx</artifactId>
+      <version>11.3.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>javafx-base</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>javafx-controls</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -34,42 +49,42 @@
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>core-framework</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>core-ui</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>core-pv</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>core-util</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>core-formula</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>core-types</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>app-trends-archive-reader</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>app-rtplot</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.epics</groupId>

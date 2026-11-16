@@ -1,7 +1,7 @@
 package org.phoebus.applications.queueserver.util;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -164,7 +164,8 @@ public class PythonParameterConverter {
 
                 // Check if result contains an error
                 Map<String, Object> resultMap = objectMapper.readValue(resultJson,
-                        new TypeReference<Map<String, Object>>() {});
+                    new TypeReference<>() {
+                    });
 
                 if (resultMap.containsKey("error")) {
                     String errorMsg = "Python type conversion failed: " + resultMap.get("error");

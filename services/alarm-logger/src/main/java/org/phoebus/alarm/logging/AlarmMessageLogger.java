@@ -23,10 +23,11 @@ import org.apache.kafka.streams.kstream.Branched;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Named;
-import org.apache.kafka.streams.kstream.Transformer;
-import org.apache.kafka.streams.kstream.TransformerSupplier;
-import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.TimestampExtractor;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.ProcessorSupplier;
+import org.apache.kafka.streams.processor.api.Record;
 import org.phoebus.applications.alarm.AlarmSystemConstants;
 import org.phoebus.applications.alarm.client.KafkaHelper;
 import org.phoebus.applications.alarm.messages.AlarmConfigMessage;
@@ -51,13 +52,12 @@ public class AlarmMessageLogger implements Runnable {
     private volatile boolean shouldReconnect = true;
     private volatile KafkaStreams currentStreams = null;
     private final long reconnectDelayMs;
-    private Thread shutdownHook = null;
 
     /**
      * Create a alarm logger for the alarm messages (both state and configuration)
      * for a given alarm server topic.
      * This runnable will create the kafka streams for the given alarm messages which match the format 'topic'
-     * 
+     *
      * @param topic - the alarm topic in kafka
      */
     public AlarmMessageLogger(String topic) {
@@ -91,7 +91,7 @@ public class AlarmMessageLogger implements Runnable {
         }
 
         // Register shutdown hook once before retry loop
-        shutdownHook = new Thread("streams-"+topic+"-alarm-messages-shutdown-hook") {
+        Thread shutdownHook = new Thread("streams-"+topic+"-alarm-messages-shutdown-hook") {
             @Override
             public void run() {
                 logger.info("Shutdown hook triggered for topic " + topic);
@@ -169,29 +169,24 @@ public class AlarmMessageLogger implements Runnable {
 
         KStream<String, AlarmMessage> alarms = builder.stream(topic,
                 Consumed.with(Serdes.String(), alarmMessageSerde).withTimestampExtractor(new TimestampExtractor() {
-
                     @Override
                     public long extract(ConsumerRecord<Object, Object> record, long previousTimestamp) {
                         return record.timestamp();
                     }
                 }));
 
-        alarms = alarms.filter((k, v) -> {
-            return v != null;
-        });
+        alarms = alarms.filter((k, v) -> v != null);
 
         alarms = alarms.map((key, value) -> {
-//            logger.config("Processing alarm message with key : " + key != null ? key
-//                    : "null" + " " + value != null ? value.toString() : "null");
             value.setKey(key);
-            return new KeyValue<String, AlarmMessage>(key, value);
+            return new KeyValue<>(key, value);
         });
 
         alarms.split(Named.as("alarm-"))
                 .branch((k, v) -> k.startsWith("state"),
-                        Branched.withConsumer(alarmStateStream -> processAlarmStateStream(alarmStateStream)))
+                        Branched.withConsumer(this::processAlarmStateStream))
                 .branch((k, v) -> k.startsWith("config"),
-                        Branched.withConsumer(alarmConfigStream -> processAlarmConfigurationStream(alarmConfigStream)))
+                        Branched.withConsumer(this::processAlarmConfigurationStream))
                 .defaultBranch(Branched.withConsumer(stream -> {
                     // Log each unmatched key in the default branch
                     stream.foreach((k, v) -> logger.warning("Unknown alarm message type for key: " + k));
@@ -251,94 +246,62 @@ public class AlarmMessageLogger implements Runnable {
     }
 
     private void processAlarmStateStream(KStream<String, AlarmMessage> alarmStateBranch) {
-
-        KStream<String, AlarmStateMessage> transformedAlarms = alarmStateBranch
-                .transform(new TransformerSupplier<String, AlarmMessage, KeyValue<String, AlarmStateMessage>>() {
+       alarmStateBranch.process(new ProcessorSupplier<String, AlarmMessage, String, AlarmStateMessage>() {
+            @Override
+            public Processor<String, AlarmMessage, String, AlarmStateMessage> get() {
+                return new Processor<>() {
+                    private ProcessorContext<String, AlarmMessage> context;
+                    @Override
+                    public void process(Record<String, AlarmMessage> record) {
+                        AlarmStateMessage newValue = record.value().getAlarmStateMessage();
+                        if(!newValue.isLeaf()){
+                            return;
+                        }
+                        String key = record.key().replace("\\", "");
+                        Matcher matcher = pattern.matcher(key);
+                        newValue.setConfig(key);
+                        matcher.find();
+                        String[] tokens = AlarmTreePath.splitPath(key);
+                        final String pv = tokens[tokens.length - 1];
+                        newValue.setPv(pv);
+                        newValue.setMessage_time(Instant.ofEpochMilli(context.currentStreamTimeMs()));
+                        ElasticClientHelper.getInstance().indexAlarmStateDocuments(stateIndexNameHelper.getIndexName(newValue.getMessage_time()), newValue);
+                    }
 
                     @Override
-                    public Transformer<String, AlarmMessage, KeyValue<String, AlarmStateMessage>> get() {
-                        return new Transformer<>() {
-                            private ProcessorContext context;
-
-                            @Override
-                            public KeyValue<String, AlarmStateMessage> transform(String key, AlarmMessage value) {
-                                key = key.replace("\\", "");
-                                AlarmStateMessage newValue = value.getAlarmStateMessage();
-                                Matcher matcher = pattern.matcher(key);
-                                newValue.setConfig(key);
-                                matcher.find();
-                                String[] tokens = AlarmTreePath.splitPath(key);
-                                final String pv = tokens[tokens.length - 1];
-                                newValue.setPv(pv);
-
-                                newValue.setMessage_time(Instant.ofEpochMilli(context.timestamp()));
-                                return new KeyValue<>(key, newValue);
-                            }
-
-                            @Override
-                            public void init(ProcessorContext context) {
-                                this.context = context;
-                            }
-
-                            @Override
-                            public void close() {
-                                // TODO Auto-generated method stub
-
-                            }
-                        };
+                    public void init(ProcessorContext context) {
+                        this.context = context;
                     }
-                });
-
-        KStream<String, AlarmStateMessage> filteredAlarms = transformedAlarms.filter((k, v) -> {
-            return v != null ? v.isLeaf() : false;
+                };
+            }
         });
-
-        // Commit to elastic
-        filteredAlarms.foreach((k, v) -> {
-            ElasticClientHelper.getInstance().indexAlarmStateDocuments(stateIndexNameHelper.getIndexName(v.getMessage_time()), v);
-        });
-
     }
 
     private void processAlarmConfigurationStream(KStream<String, AlarmMessage> alarmConfigBranch) {
-        KStream<String, AlarmConfigMessage> alarmConfigMessages = alarmConfigBranch.transform(new TransformerSupplier<String, AlarmMessage, KeyValue<String,AlarmConfigMessage>>() {
-
+        alarmConfigBranch.process(new ProcessorSupplier<String, AlarmMessage, String, AlarmConfigMessage>() {
             @Override
-            public Transformer<String, AlarmMessage, KeyValue<String, AlarmConfigMessage>> get() {
-                return new Transformer<String, AlarmMessage, KeyValue<String, AlarmConfigMessage>>() {
-                    private ProcessorContext context;
+            public Processor<String, AlarmMessage, String, AlarmConfigMessage> get() {
+                return new Processor<>() {
+                    private ProcessorContext<String, AlarmMessage> context;
+
                     @Override
                     public void init(ProcessorContext context) {
                         this.context = context;
                     }
 
                     @Override
-                    public KeyValue<String, AlarmConfigMessage> transform(String key, AlarmMessage value) {
-                        
-                        key = key.replace("\\", "");
-                        if(value != null) {
-                            AlarmConfigMessage newValue = value.getAlarmConfigMessage();
+                    public void process(Record<String, AlarmMessage> record) {
+
+                        String key = record.key().replace("\\", "");
+                        if (record.value() != null) {
+                            AlarmConfigMessage newValue = record.value().getAlarmConfigMessage();
                             newValue.setConfig(key);
-                            newValue.setMessage_time(Instant.ofEpochMilli(context.timestamp()));
-                            return new KeyValue<String, AlarmConfigMessage>(key, newValue);
-                        } else {
-                            return null;
+                            newValue.setMessage_time(Instant.ofEpochMilli(context.currentStreamTimeMs()));
+                            ElasticClientHelper.getInstance().indexAlarmConfigDocuments(configIndexNameHelper.getIndexName(newValue.getMessage_time()), newValue);
                         }
                     }
-
-                    @Override
-                    public void close() {
-                        
-                    }
-                    
                 };
             }
         });
-
-        // Commit to elastic
-        alarmConfigMessages.foreach((k, v) -> {
-            ElasticClientHelper.getInstance().indexAlarmConfigDocuments(configIndexNameHelper.getIndexName(v.getMessage_time()), v);
-        });
     }
-
 }

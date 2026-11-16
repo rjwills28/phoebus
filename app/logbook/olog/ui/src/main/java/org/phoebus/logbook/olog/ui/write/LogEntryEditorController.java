@@ -19,9 +19,9 @@
 
 package org.phoebus.logbook.olog.ui.write;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.SimpleType;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.type.SimpleType;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -388,10 +388,9 @@ public class LogEntryEditorController {
 
         textArea.textProperty().bindBidirectional(descriptionProperty);
         switch(editMode){
-            case NEW_LOG_ENTRY -> descriptionProperty.set("");
+            case NEW_LOG_ENTRY -> descriptionProperty.set(logEntry.getDescription()!= null ? logEntry.getDescription(): "");
             case UPDATE_LOG_ENTRY, NEW_LOG_ENTRY_FROM_SELECTION -> descriptionProperty.set(logEntry.getSource());
         }
-//        descriptionProperty.set(logEntry.getSource());
         descriptionProperty.addListener((observable, oldValue, newValue) -> isDirty = true);
 
         Image tagIcon = ImageCache.getImage(LogEntryEditorController.class, "/icons/add_tag.png");

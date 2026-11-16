@@ -2,7 +2,7 @@
     <parent>
         <artifactId>app-logbook-olog</artifactId>
         <groupId>org.phoebus</groupId>
-        <version>6.0.0-SNAPSHOT</version>
+        <version>7.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -12,42 +12,42 @@
         <dependency>
             <groupId>org.phoebus</groupId>
             <artifactId>core-framework</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
+            <version>7.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.phoebus</groupId>
             <artifactId>core-websocket-common</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
+            <version>7.0.0-SNAPSHOT</version>
         </dependency>
       <dependency>
           <groupId>org.phoebus</groupId>
           <artifactId>core-websocket-client</artifactId>
-          <version>6.0.0-SNAPSHOT</version>
+          <version>7.0.0-SNAPSHOT</version>
       </dependency>
         <dependency>
             <groupId>org.phoebus</groupId>
             <artifactId>core-ui</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
+            <version>7.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.phoebus</groupId>
             <artifactId>core-util</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
+            <version>7.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.phoebus</groupId>
             <artifactId>core-logbook</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
+            <version>7.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.phoebus</groupId>
             <artifactId>core-security</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
+            <version>7.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.phoebus</groupId>
             <artifactId>app-logbook-olog-client-es</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
+            <version>7.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jfxtras</groupId>
@@ -69,6 +69,22 @@
           <groupId>javax.json</groupId>
           <artifactId>javax.json-api</artifactId>
           <version>1.1.2</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-annotations</artifactId>
+          <version>${jackson.annotations.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${tools.jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${tools.jackson.version}</version>
       </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.atlassian.commonmark/commonmark -->
@@ -112,6 +128,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
     </dependencies>
 </project>

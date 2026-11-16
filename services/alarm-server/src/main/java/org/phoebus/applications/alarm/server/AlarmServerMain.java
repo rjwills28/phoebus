@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.phoebus.applications.alarm.server;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import org.phoebus.applications.alarm.client.ClientState;
 import org.phoebus.applications.alarm.model.AlarmTreeItem;
 import org.phoebus.applications.alarm.model.AlarmTreeLeaf;
@@ -121,6 +121,7 @@ public class AlarmServerMain implements ServerModelListener {
             }
         } catch (final Throwable ex) {
             logger.log(Level.SEVERE, "Alarm Server main loop error", ex);
+			System.exit(-1);
         }
 
         logger.info("Done.");
@@ -503,7 +504,7 @@ public class AlarmServerMain implements ServerModelListener {
         // Handle arguments
         final List<String> args = new ArrayList<>(List.of(original_args));
         final Iterator<String> iter = args.iterator();
-        HashMap<String, String> parsed_args = new HashMap<String, String>();
+        HashMap<String, String> parsed_args = new HashMap<>();
         try {
             // define command line arguments
             String help_arg = "-help";
@@ -619,7 +620,7 @@ public class AlarmServerMain implements ServerModelListener {
             help();
             System.out.println();
             ex.printStackTrace();
-            return;
+			System.exit(-1);
         }
 
         logger.info("Alarm Server (PID " + ProcessHandle.current().pid() + ")");

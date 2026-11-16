@@ -15,10 +15,10 @@ Credentials Manager application. See also below.
 Nodes and node types
 --------------------
 
-Save-and-restore data managed by the service is arranged in a tree structure and hence presented in the client UI using
-a tree view UI component. In the following objects in the tree are referred to as "nodes".
+Save-and-restore data managed by the service is arranged in a tree table structure and hence presented in the client UI using
+a tree table view UI component. In the following objects in the tree are referred to as "nodes".
 
-The root of the tree structure is a folder that may only contain folder nodes. Folders may contain sub-folders, configurations and composite snapshots.
+The root of the tree table structure is a folder that may only contain folder nodes. Folders may contain sub-folders, configurations and composite snapshots.
 The child nodes of a configuration are snapshots associated with that configuration.
 
 Additionally a composite snapshot node may reference an arbitrary number of snapshot or composite snapshot nodes.
@@ -38,10 +38,12 @@ There are thus four node types managed in the application:
 *NOTE*: If a folder or configuration node is deleted, all child nodes are unconditionally and recursively deleted. The user
 is prompted to confirm delete actions as they are irreversible.
 
-Below screen shot shows the tree structure and a configuration editor.
+Below screen shot shows the tree table structure and a configuration editor.
 
 .. image:: images/screenshot1.png
    :width: 80%
+
+The + icon to the left of the table headers launches a menu from which user can choose to hide or show columns.
 
 Annotations on nodes
 --------------------
@@ -342,8 +344,10 @@ To restore the values in the snapshot user should click the Restore button. Duri
 disabled. In case a write operation fails on a PV, the process is *not* aborted, and user will be
 presented with a list of failed PVs when restore operation completes.
 
-**NOTE:** During the restore operation PVs are written in parallel, i.e. in an asynchronous manner. The order of
-write operations is hence undefined.
+**NOTE:** During the restore operation PVs are by default written in parallel, i.e. in an asynchronous manner. The order of
+write operations is hence undefined. If synchronous write operations of PVs are needed (e.g. when using channel access),
+the client or server or both should set the preference ``org.phoebus.saveandrestore.util/restorePolicy`` should be set
+to ``SYNCHRONOUS``.
 
 Prior to restore user has the option to:
 
@@ -363,7 +367,7 @@ Filter PV items in list
 ^^^^^^^^^^^^^^^^^^^^^^^
 The list of items in the snapshot view can be filtered based on the PV name. See screenshot for highlighted UI element
 where user may specify a string pattern to match PV names. Non-matching items will be hidden from the list view and
-**also excluded from a restore operation**.
+**also excluded from a restore operation**. Filtering is case-insensitive.
 
 To filter the view without excluding PV items from a restore operation, user needs to tick the “Preserve selection…” checkbox.
 

@@ -20,6 +20,8 @@ import org.csstudio.display.builder.model.WidgetProperty;
 import org.csstudio.display.builder.model.WidgetPropertyListener;
 import org.csstudio.display.builder.model.properties.CommonWidgetProperties;
 import org.csstudio.display.builder.model.properties.ConfirmDialog;
+import org.csstudio.display.builder.model.properties.WidgetFont;
+import org.csstudio.display.builder.model.properties.WidgetFontStyle;
 import org.csstudio.display.builder.model.util.ModelResourceUtil;
 import org.csstudio.display.builder.model.util.VTypeUtil;
 import org.csstudio.display.builder.model.widgets.BoolButtonWidget;
@@ -37,6 +39,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
@@ -117,8 +120,16 @@ public class BoolButtonRepresentation extends RegionBaseRepresentation<Pane, Boo
             else
             {
                 final boolean inverted = model_widget.propMode().getValue() == Mode.PUSH_INVERTED;
-                button.setOnMousePressed(event -> handlePress(! inverted));
-                button.setOnMouseReleased(event -> handlePress(inverted));
+                button.setOnMousePressed(event ->
+                {
+                    if (event.getButton() == MouseButton.PRIMARY)
+                        handlePress(! inverted);
+                });
+                button.setOnMouseReleased(event ->
+                {
+                    if (event.getButton() == MouseButton.PRIMARY)
+                        handlePress(inverted);
+                });
             }
         }
 
@@ -350,7 +361,7 @@ public class BoolButtonRepresentation extends RegionBaseRepresentation<Pane, Boo
         value_label = state_labels[on_state];
 
         computeBackground();
-        
+
         pos = JFXUtil.computePos(model_widget.propHorizontalAlignment().getValue(),
                 model_widget.propVerticalAlignment().getValue());
 
@@ -385,6 +396,10 @@ public class BoolButtonRepresentation extends RegionBaseRepresentation<Pane, Boo
                       hei = model_widget.propHeight().getValue();
             button.setPrefSize(wid, hei);
             button.setFont(JFXUtil.convert(model_widget.propFont().getValue()));
+            WidgetFont font = model_widget.propFont().getValue();
+            WidgetFontStyle style = font.getStyle();
+            boolean underline = style.toString().contains(WidgetFontStyle.UNDERLINE.toString());
+            button.setUnderline(underline);
             button.setTextFill(foreground);
             button.setStyle(background);
 
@@ -408,7 +423,7 @@ public class BoolButtonRepresentation extends RegionBaseRepresentation<Pane, Boo
         {
             enabled = model_widget.propEnabled().getValue()  &&
                                     model_widget.runtimePropPVWritable().getValue();
-            setDisabledLook(enabled, jfx_node.getChildren());        
+            setDisabledLook(enabled, jfx_node.getChildren());
         }
         if (update_value)
         {

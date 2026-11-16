@@ -9,10 +9,10 @@ package org.csstudio.archive.engine.server;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.csstudio.archive.Engine;
 import org.csstudio.archive.engine.model.ArchiveChannel;
@@ -20,7 +20,7 @@ import org.csstudio.archive.engine.model.ArchiveGroup;
 import org.csstudio.archive.engine.model.BufferStats;
 import org.csstudio.archive.engine.model.EngineModel;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /** 'groups' web page
  *  @author Kay Kasemir
@@ -45,7 +45,7 @@ public class GroupsServlet extends HttpServlet
             final JSONWriter json = new JSONWriter(request, response);
             final JsonGenerator jg = json.getGenerator();
 
-            jg.writeArrayFieldStart("Archive Engine Groups");
+            jg.writeArrayPropertyStart("Archive Engine Groups");
 
             final int group_count = model.getGroupCount();
             int total_channels = 0;
@@ -79,22 +79,22 @@ public class GroupsServlet extends HttpServlet
                 total_received_values += received_values;
 
                 jg.writeStartObject();
-                jg.writeStringField(Messages.HTTP_Group, group.getName());
-                jg.writeBooleanField(Messages.HTTP_Enabled, group.isEnabled());
-                jg.writeNumberField(Messages.HTTP_ChannelCount, channel_count);
-                jg.writeNumberField(Messages.HTTP_Connected, connect_count);
-                jg.writeNumberField(Messages.HTTP_ReceivedValues, received_values);
-                jg.writeNumberField(Messages.HTTP_QueueAvg, queue_avg);
-                jg.writeNumberField(Messages.HTTP_QueueMax, queue_max);
+                jg.writeStringProperty(Messages.HTTP_Group, group.getName());
+                jg.writeBooleanProperty(Messages.HTTP_Enabled, group.isEnabled());
+                jg.writeNumberProperty(Messages.HTTP_ChannelCount, channel_count);
+                jg.writeNumberProperty(Messages.HTTP_Connected, connect_count);
+                jg.writeNumberProperty(Messages.HTTP_ReceivedValues, received_values);
+                jg.writeNumberProperty(Messages.HTTP_QueueAvg, queue_avg);
+                jg.writeNumberProperty(Messages.HTTP_QueueMax, queue_max);
                 jg.writeEndObject();
             }
 
             // 'Total' object
             jg.writeStartObject();
-            jg.writeStringField(Messages.HTTP_Group, Messages.HTTP_Total);
-            jg.writeNumberField(Messages.HTTP_ChannelCount, total_channels);
-            jg.writeNumberField(Messages.HTTP_Connected, total_connect);
-            jg.writeNumberField(Messages.HTTP_ReceivedValues, total_received_values);
+            jg.writeStringProperty(Messages.HTTP_Group, Messages.HTTP_Total);
+            jg.writeNumberProperty(Messages.HTTP_ChannelCount, total_channels);
+            jg.writeNumberProperty(Messages.HTTP_Connected, total_connect);
+            jg.writeNumberProperty(Messages.HTTP_ReceivedValues, total_received_values);
             jg.writeEndObject();
 
             jg.writeEndArray();

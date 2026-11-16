@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import javafx.event.Event;
+import javafx.scene.text.Text;
 import org.csstudio.display.builder.model.persist.NamedWidgetFonts;
 import org.csstudio.display.builder.model.persist.WidgetFontService;
 import org.csstudio.display.builder.model.properties.NamedWidgetFont;
@@ -82,7 +83,7 @@ public class WidgetFontPopOverController implements Initializable {
     @FXML private ComboBox<WidgetFontStyle> styles;
     @FXML private ComboBox<Double> sizes;
 
-    @FXML private TextField preview;
+    @FXML private Text preview;
 
     @FXML private Button cancelButton;
     @FXML private Button defaultButton;
@@ -224,7 +225,9 @@ public class WidgetFontPopOverController implements Initializable {
             }
 
             preview.setFont(JFXUtil.convert(newValue));
-
+            WidgetFontStyle style = newValue.getStyle();
+            boolean underline = style.toString().contains(WidgetFontStyle.UNDERLINE.toString());
+            preview.setUnderline(underline);
         });
 
         //  Buttons
@@ -266,7 +269,7 @@ public class WidgetFontPopOverController implements Initializable {
         styles.valueProperty().addListener(( observable, oldValue, newValue ) -> stylesUpdater.accept(newValue));
 
         sizes.setPlaceholder(new Label(Messages.WidgetFontPopOver_Sizes));
-        sizes.setConverter(new FormatStringConverter<Double>(new DecimalFormat("##0.0#")) {
+        sizes.setConverter(new FormatStringConverter<>(new DecimalFormat("##0.0#")) {
             @Override
             public Double fromString ( String value ) {
                 return ((Number) super.fromString(value)).doubleValue();

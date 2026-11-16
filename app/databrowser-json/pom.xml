@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.phoebus</groupId>
     <artifactId>app</artifactId>
-    <version>6.0.0-SNAPSHOT</version>
+    <version>7.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>app-databrowser-json</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
@@ -25,19 +25,20 @@
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>app-databrowser</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>org.phoebus</groupId>
       <artifactId>core-framework</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
+      <version>7.0.0-SNAPSHOT</version>
     </dependency>
 
+    <!-- https://mvnrepository.com/artifact/tools.jackson.core/jackson-core -->
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
+      <groupId>tools.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>${jackson.version}</version>
+      <version>${tools.jackson.version}</version>
     </dependency>
 
     <dependency>

@@ -9,10 +9,10 @@ package org.csstudio.archive.engine.server;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.csstudio.archive.Engine;
 import org.csstudio.archive.engine.model.ArchiveChannel;
@@ -21,7 +21,7 @@ import org.csstudio.archive.engine.model.BufferStats;
 import org.csstudio.archive.engine.model.EngineModel;
 import org.csstudio.archive.engine.model.SampleBuffer;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /** 'channel' web page
  *  @author Kay Kasemir
@@ -54,15 +54,15 @@ public class ChannelServlet extends HttpServlet
             final JSONWriter json = new JSONWriter(request, response);
             final JsonGenerator jg = json.getGenerator();
 
-            jg.writeObjectFieldStart(Messages.HTTP_ChannelInfo);
+            jg.writeObjectPropertyStart(Messages.HTTP_ChannelInfo);
             json.writeChannel(channel);
             jg.writeEndObject();
 
-            jg.writeObjectFieldStart("Group Membership");
+            jg.writeObjectPropertyStart("Group Membership");
             for (int i=0; i<channel.getGroupCount(); ++i)
             {
                 final ArchiveGroup group = channel.getGroup(i);
-                jg.writeBooleanField(group.getName(), group.isEnabled());
+                jg.writeBooleanProperty(group.getName(), group.isEnabled());
             }
             jg.writeEndObject();
 
