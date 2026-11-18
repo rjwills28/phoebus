@@ -145,7 +145,6 @@ public class OpenAbout implements MenuEntry
 
         dialog.setResizable(true);
         dialog.getDialogPane().setPrefWidth(800);
-        dialog.getDialogPane().setMinHeight(400);
         DialogHelper.positionDialog(dialog, DockPane.getActiveDockPane(), -400, -300);
 
         dialog.showAndWait();
